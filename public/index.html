@@ -45,6 +45,12 @@
             font-weight: bold;
             margin-left: 8px;
         }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -53,6 +59,11 @@
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">☕ La Cagnotte du Café</h1>
             <p class="text-gray-600">Gérez votre café d'équipe facilement</p>
+            <div id="statusConnexion" class="mt-2">
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                    🔄 Connexion en cours...
+                </span>
+            </div>
         </header>
 
         <!-- Solde Principal -->
@@ -85,7 +96,7 @@
                     
                     <!-- Liste des participants -->
                     <div id="listeParticipants">
-                        <p class="text-gray-500 text-center py-8">Aucun participant pour le moment.</p>
+                        <div class="loading">🔄 Chargement des participants...</div>
                     </div>
                 </div>
 
@@ -106,7 +117,7 @@
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="font-semibold mb-3">Préparations par Jour</h4>
                         <div id="preparationsJour">
-                            <p class="text-gray-500">Aucune préparation pour le moment.</p>
+                            <div class="loading">🔄 Chargement...</div>
                         </div>
                     </div>
                 </div>
@@ -159,32 +170,108 @@
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4">📜 Historique des Transactions</h3>
                     <div id="historiqueTransactions" class="max-h-64 overflow-y-auto">
-                        <p class="text-gray-500">Aucune transaction pour le moment.</p>
+                        <div class="loading">🔄 Chargement...</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // === STOCKAGE LOCAL ===
-        function sauvegarder(cle, donnees) {
-            localStorage.setItem(cle, JSON.stringify(donnees));
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            doc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot,
+            orderBy,
+            query,
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuration Firebase avec VOS vraies clés
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZi2ttG9mf_87p_Cwph5cZNtJqc7sFuoY",
+            authDomain: "cagnotte-cafe.firebaseapp.com",
+            projectId: "cagnotte-cafe",
+            storageBucket: "cagnotte-cafe.firebasestorage.app",
+            messagingSenderId: "99343324135",
+            appId: "1:99343324135:web:2f7f17b929daf9579f6342",
+            measurementId: "G-KPTKK1XT9C"
+        };
+
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Variables globales
+        let participants = [];
+        let transactions = [];
+        let preparations = [];
+        let stock = { cafe: 0, filtres: 0 };
+
+        // === STATUT CONNEXION ===
+        function mettreAJourStatutConnexion(statut) {
+            const statusElement = document.getElementById('statusConnexion');
+            const statuts = {
+                'connexion': { text: '🔄 Connexion en cours...', class: 'bg-yellow-100 text-yellow-800' },
+                'connecte': { text: '✅ Connecté - Équipe synchronisée', class: 'bg-green-100 text-green-800' },
+                'erreur': { text: '❌ Erreur de connexion', class: 'bg-red-100 text-red-800' }
+            };
+            
+            const config = statuts[statut] || statuts['erreur'];
+            statusElement.innerHTML = `<span class="px-3 py-1 ${config.class} rounded-full text-sm">${config.text}</span>`;
         }
 
-        function charger(cle) {
-            const data = localStorage.getItem(cle);
-            return data ? JSON.parse(data) : [];
-        }
+        // === FIREBASE FONCTIONS ===
+        async function chargerDonnees() {
+            try {
+                mettreAJourStatutConnexion('connexion');
+                
+                // Charger participants
+                const participantsSnapshot = await getDocs(collection(db, 'participants'));
+                participants = participantsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
 
-        // === DONNÉES ===
-        let participants = charger('participants') || [];
-        let transactions = charger('transactions') || [];
-        let preparations = charger('preparations') || [];
-        let stock = charger('stock') || { cafe: 0, filtres: 0 };
+                // Charger transactions
+                const transactionsSnapshot = await getDocs(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')));
+                transactions = transactionsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Charger préparations
+                const preparationsSnapshot = await getDocs(query(collection(db, 'preparations'), orderBy('timestamp', 'desc')));
+                preparations = preparationsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Charger stock
+                const stockSnapshot = await getDocs(collection(db, 'stock'));
+                if (!stockSnapshot.empty) {
+                    const stockDoc = stockSnapshot.docs[0];
+                    stock = stockDoc.data();
+                }
+
+                mettreAJourStatutConnexion('connecte');
+                mettreAJourInterface();
+            } catch (error) {
+                console.error('Erreur lors du chargement:', error);
+                mettreAJourStatutConnexion('erreur');
+            }
+        }
 
         // === FONCTIONS PARTICIPANTS ===
-        function ajouterParticipant() {
+        window.ajouterParticipant = async function() {
             const nom = document.getElementById('nomParticipant').value.trim();
             const contribution = parseFloat(document.getElementById('contributionInitiale').value) || 0;
             
@@ -199,64 +286,98 @@
                 return;
             }
             
-            const participant = {
-                id: Date.now(),
-                nom: nom,
-                contributions: contribution > 0 ? [{ montant: contribution, date: new Date().toISOString() }] : [],
-                preparationsCompte: 0,
-                totalContribue: contribution
-            };
-            
-            participants.push(participant);
-            sauvegarder('participants', participants);
-            
-            if (contribution > 0) {
-                ajouterTransaction(`💰 Contribution de ${nom}`, contribution, 'contribution', nom);
+            try {
+                const participant = {
+                    nom: nom,
+                    contributions: contribution > 0 ? [{ montant: contribution, date: new Date().toISOString() }] : [],
+                    preparationsCompte: 0,
+                    totalContribue: contribution,
+                    timestamp: serverTimestamp()
+                };
+                
+                await addDoc(collection(db, 'participants'), participant);
+                
+                if (contribution > 0) {
+                    await ajouterTransaction(`💰 Contribution de ${nom}`, contribution, 'contribution', nom);
+                }
+                
+                document.getElementById('nomParticipant').value = '';
+                document.getElementById('contributionInitiale').value = '';
+                
+                alert(`✅ ${nom} ajouté avec succès !`);
+                await chargerDonnees();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de l\'ajout du participant');
+            }
+        };
+
+        window.ajouterContributionParticipant = async function(participantId, montant) {
+            const montantFloat = parseFloat(montant);
+            if (!montantFloat || montantFloat === 0) {
+                alert('❌ Veuillez entrer un montant valide');
+                return;
             }
             
-            document.getElementById('nomParticipant').value = '';
-            document.getElementById('contributionInitiale').value = '';
-            
-            mettreAJourInterface();
-            alert(`✅ ${nom} ajouté avec succès !`);
-        }
-
-        function ajouterContributionParticipant(participantId, montant) {
             const participant = participants.find(p => p.id === participantId);
             if (!participant) return;
             
-            const contribution = {
-                montant: parseFloat(montant),
-                date: new Date().toISOString()
-            };
-            
-            participant.contributions.push(contribution);
-            participant.totalContribue += contribution.montant;
-            
-            sauvegarder('participants', participants);
-            ajouterTransaction(`💰 Contribution de ${participant.nom}`, contribution.montant, 'contribution', participant.nom);
-            mettreAJourInterface();
-        }
+            try {
+                const contribution = {
+                    montant: montantFloat,
+                    date: new Date().toISOString()
+                };
+                
+                const nouvellesContributions = [...(participant.contributions || []), contribution];
+                const nouveauTotal = participant.totalContribue + montantFloat;
+                
+                await updateDoc(doc(db, 'participants', participantId), {
+                    contributions: nouvellesContributions,
+                    totalContribue: nouveauTotal
+                });
+                
+                await ajouterTransaction(`💰 Contribution de ${participant.nom}`, montantFloat, 'contribution', participant.nom);
+                await chargerDonnees();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de l\'ajout de la contribution');
+            }
+        };
 
-        function retirerContributionParticipant(participantId, montant) {
+        window.retirerContributionParticipant = async function(participantId, montant) {
+            const montantFloat = parseFloat(montant);
+            if (!montantFloat || montantFloat === 0) {
+                alert('❌ Veuillez entrer un montant valide');
+                return;
+            }
+            
             const participant = participants.find(p => p.id === participantId);
             if (!participant) return;
             
-            const retrait = {
-                montant: -parseFloat(montant),
-                date: new Date().toISOString()
-            };
-            
-            participant.contributions.push(retrait);
-            participant.totalContribue += retrait.montant;
-            
-            sauvegarder('participants', participants);
-            ajouterTransaction(`❌ Retrait de ${participant.nom}`, Math.abs(retrait.montant), 'retrait', participant.nom);
-            mettreAJourInterface();
-        }
+            try {
+                const retrait = {
+                    montant: -montantFloat,
+                    date: new Date().toISOString()
+                };
+                
+                const nouvellesContributions = [...(participant.contributions || []), retrait];
+                const nouveauTotal = participant.totalContribue - montantFloat;
+                
+                await updateDoc(doc(db, 'participants', participantId), {
+                    contributions: nouvellesContributions,
+                    totalContribue: nouveauTotal
+                });
+                
+                await ajouterTransaction(`❌ Retrait de ${participant.nom}`, montantFloat, 'retrait', participant.nom);
+                await chargerDonnees();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors du retrait');
+            }
+        };
 
         // === FONCTIONS DÉPENSES ===
-        function ajouterDepense() {
+        window.ajouterDepense = async function() {
             const description = document.getElementById('descriptionDepense').value.trim();
             const montant = parseFloat(document.getElementById('montantDepense').value) || 0;
             
@@ -265,17 +386,22 @@
                 return;
             }
             
-            ajouterTransaction(description, montant, 'depense');
-            
-            document.getElementById('descriptionDepense').value = '';
-            document.getElementById('montantDepense').value = '';
-            
-            mettreAJourInterface();
-            alert('✅ Dépense enregistrée !');
-        }
+            try {
+                await ajouterTransaction(description, montant, 'depense');
+                
+                document.getElementById('descriptionDepense').value = '';
+                document.getElementById('montantDepense').value = '';
+                
+                alert('✅ Dépense enregistrée !');
+                await chargerDonnees();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de l\'ajout de la dépense');
+            }
+        };
 
         // === FONCTIONS PRÉPARATIONS ===
-        function ajouterPreparation() {
+        window.ajouterPreparation = async function() {
             const selecteur = document.getElementById('preparateurSelect');
             const participantNom = selecteur.value;
             
@@ -284,48 +410,69 @@
                 return;
             }
             
-            const participant = participants.find(p => p.nom === participantNom);
-            if (participant) {
-                participant.preparationsCompte++;
-                sauvegarder('participants', participants);
+            try {
+                const participant = participants.find(p => p.nom === participantNom);
+                if (participant) {
+                    await updateDoc(doc(db, 'participants', participant.id), {
+                        preparationsCompte: (participant.preparationsCompte || 0) + 1
+                    });
+                }
+                
+                const preparation = {
+                    preparateur: participantNom,
+                    date: new Date().toLocaleDateString('fr-FR'),
+                    heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'}),
+                    timestamp: serverTimestamp()
+                };
+                
+                await addDoc(collection(db, 'preparations'), preparation);
+                
+                selecteur.value = '';
+                alert(`☕ ${participantNom} a préparé un café !`);
+                await chargerDonnees();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de l\'ajout de la préparation');
             }
-            
-            const preparation = {
-                id: Date.now(),
-                preparateur: participantNom,
-                date: new Date().toLocaleDateString('fr-FR'),
-                heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
-            };
-            
-            preparations.push(preparation);
-            sauvegarder('preparations', preparations);
-            
-            selecteur.value = '';
-            mettreAJourInterface();
-            alert(`☕ ${participantNom} a préparé un café !`);
-        }
+        };
 
         // === FONCTIONS STOCK ===
-        function modifierStock(type, quantite) {
-            stock[type] = Math.max(0, (stock[type] || 0) + quantite);
-            sauvegarder('stock', stock);
-            mettreAJourInterface();
-        }
+        window.modifierStock = async function(type, quantite) {
+            try {
+                const nouveauStock = {
+                    ...stock,
+                    [type]: Math.max(0, (stock[type] || 0) + quantite)
+                };
+                
+                // Mettre à jour ou créer le document stock
+                const stockSnapshot = await getDocs(collection(db, 'stock'));
+                if (stockSnapshot.empty) {
+                    await addDoc(collection(db, 'stock'), nouveauStock);
+                } else {
+                    const stockDoc = stockSnapshot.docs[0];
+                    await updateDoc(stockDoc.ref, nouveauStock);
+                }
+                
+                await chargerDonnees();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de la modification du stock');
+            }
+        };
 
         // === FONCTIONS TRANSACTIONS ===
-        function ajouterTransaction(description, montant, type, participant = null) {
+        async function ajouterTransaction(description, montant, type, participant = null) {
             const transaction = {
-                id: Date.now(),
                 description: description,
                 montant: montant,
                 type: type,
                 participant: participant,
                 date: new Date().toLocaleDateString('fr-FR'),
-                heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
+                heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'}),
+                timestamp: serverTimestamp()
             };
             
-            transactions.push(transaction);
-            sauvegarder('transactions', transactions);
+            await addDoc(collection(db, 'transactions'), transaction);
         }
 
         // === AFFICHAGE ===
@@ -375,7 +522,7 @@
                             <h4 class="font-bold text-lg">${p.nom}</h4>
                             <p class="text-sm opacity-90">
                                 Total: ${p.totalContribue.toFixed(2)}€
-                                <span class="preparation-counter">☕ ${p.preparationsCompte}</span>
+                                <span class="preparation-counter">☕ ${p.preparationsCompte || 0}</span>
                             </p>
                         </div>
                         <div class="text-3xl">
@@ -386,11 +533,11 @@
                     <div class="mt-3 flex gap-2">
                         <input type="number" id="contrib-${p.id}" placeholder="Montant" step="0.01" 
                                class="flex-1 p-2 rounded bg-white/20 text-white placeholder-white/70">
-                        <button onclick="ajouterContributionParticipant(${p.id}, document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
+                        <button onclick="ajouterContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
                                 class="px-4 py-2 bg-green-500/80 rounded text-white hover:bg-green-600">
                             ➕
                         </button>
-                        <button onclick="retirerContributionParticipant(${p.id}, document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
+                        <button onclick="retirerContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
                                 class="px-4 py-2 bg-red-500/80 rounded text-white hover:bg-red-600">
                             ➖
                         </button>
@@ -408,7 +555,7 @@
                 return;
             }
             
-            const transactionsRecentes = transactions.slice(-10).reverse();
+            const transactionsRecentes = transactions.slice(0, 10);
             
             container.innerHTML = transactionsRecentes.map(t => {
                 const typeIcon = {
@@ -490,10 +637,51 @@
                 participants.map(p => `<option value="${p.nom}">${p.nom}</option>`).join('');
         }
 
+        // === ÉCOUTE EN TEMPS RÉEL ===
+        function configurerEcouteTempsReel() {
+            // Écouter les participants
+            onSnapshot(collection(db, 'participants'), (snapshot) => {
+                participants = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                mettreAJourInterface();
+            });
+
+            // Écouter les transactions
+            onSnapshot(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')), (snapshot) => {
+                transactions = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                mettreAJourInterface();
+            });
+
+            // Écouter les préparations
+            onSnapshot(query(collection(db, 'preparations'), orderBy('timestamp', 'desc')), (snapshot) => {
+                preparations = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                mettreAJourInterface();
+            });
+
+            // Écouter le stock
+            onSnapshot(collection(db, 'stock'), (snapshot) => {
+                if (!snapshot.empty) {
+                    stock = snapshot.docs[0].data();
+                    afficherStock();
+                }
+            });
+        }
+
         // === INITIALISATION ===
         document.addEventListener('DOMContentLoaded', function() {
-            mettreAJourInterface();
-            console.log('☕ Cagnotte du café chargée !');
+            console.log('☕ Initialisation de la cagnotte du café...');
+            chargerDonnees().then(() => {
+                configurerEcouteTempsReel();
+                console.log('✅ Cagnotte du café chargée avec synchronisation temps réel !');
+            });
         });
     </script>
 </body>
