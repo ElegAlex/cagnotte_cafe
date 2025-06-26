@@ -803,13 +803,20 @@
                             </div>
                         </div>
                         <div class="flex flex-col items-end">
-                            <div class="text-xl">${escapeHtml(p.avatar || '🙂')}</div>
+                            ${p.avatar && p.avatar.endsWith('.svg')
+                                ? `<img src="${escapeHtml(p.avatar)}" alt="avatar" class="w-6 h-6">`
+                                : `<div class="text-xl">${escapeHtml(p.avatar || '🙂')}</div>`}
                             <select onchange="changerAvatarParticipant('${p.id}', this.value)" class="input px-1 py-0.5 text-xs mt-1">
                                 <option value="🙂" ${p.avatar === '🙂' ? 'selected' : ''}>🙂</option>
                                 <option value="😀" ${p.avatar === '😀' ? 'selected' : ''}>😀</option>
                                 <option value="😎" ${p.avatar === '😎' ? 'selected' : ''}>😎</option>
                                 <option value="😃" ${p.avatar === '😃' ? 'selected' : ''}>😃</option>
                                 <option value="☕" ${p.avatar === '☕' ? 'selected' : ''}>☕</option>
+                                <option value="avatars/avatar1.svg" ${p.avatar === 'avatars/avatar1.svg' ? 'selected' : ''}>Avatar 1</option>
+                                <option value="avatars/avatar2.svg" ${p.avatar === 'avatars/avatar2.svg' ? 'selected' : ''}>Avatar 2</option>
+                                <option value="avatars/avatar3.svg" ${p.avatar === 'avatars/avatar3.svg' ? 'selected' : ''}>Avatar 3</option>
+                                <option value="avatars/avatar4.svg" ${p.avatar === 'avatars/avatar4.svg' ? 'selected' : ''}>Avatar 4</option>
+                                <option value="avatars/avatar5.svg" ${p.avatar === 'avatars/avatar5.svg' ? 'selected' : ''}>Avatar 5</option>
                             </select>
                         </div>
                     </div>
