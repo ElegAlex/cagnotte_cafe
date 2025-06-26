@@ -3,183 +3,378 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Cagnotte du Café ☕</title>
+    <title>Cagnotte Café</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Styles custom pour votre design original */
-        .participant-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: #fafafa;
+            color: #1a1a1a;
+        }
+        
+        .card {
+            background: white;
+            border: 1px solid #e5e5e5;
             border-radius: 12px;
-            color: white;
-            padding: 16px;
-            margin: 8px 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
         }
         
-        .emoji-large {
-            font-size: 2rem;
+        .card:hover {
+            border-color: #d0d0d0;
         }
         
-        .counter-individual {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
+        .participant-card {
+            background: white;
+            border: 1px solid #e5e5e5;
             border-radius: 8px;
-            padding: 12px;
-            text-align: center;
+            transition: all 0.15s ease;
         }
         
-        .negative-contrib {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        .participant-card:hover {
+            border-color: #a3a3a3;
         }
         
-        .positive-contrib {
-            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        .participant-positive {
+            border-left: 3px solid #22c55e;
         }
         
-        .preparation-counter {
-            display: inline-block;
-            background: #ffd43b;
-            color: #333;
-            padding: 4px 12px;
+        .participant-negative {
+            border-left: 3px solid #ef4444;
+        }
+        
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #404040;
+        }
+        
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #525252;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+        
+        .input {
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            background: white;
+            transition: all 0.15s ease;
+            color: #1a1a1a;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+        }
+        
+        .input::placeholder {
+            color: #a3a3a3;
+        }
+        
+        .status-badge {
+            background: #f5f5f5;
+            color: #525252;
+            font-size: 13px;
+            font-weight: 500;
             border-radius: 20px;
-            font-weight: bold;
-            margin-left: 8px;
+            border: 1px solid #e5e5e5;
         }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
+        
+        .status-connected {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #404040 100%);
+            color: white;
+        }
+        
+        .transaction-item {
+            background: #f9f9f9;
+            border: 1px solid #f0f0f0;
+            border-radius: 6px;
+            transition: background 0.15s ease;
+        }
+        
+        .transaction-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .stock-item {
+            background: #f9f9f9;
+            border: 1px solid #f0f0f0;
+            border-radius: 6px;
+        }
+        
+        .preparation-count {
+            background: #fbbf24;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+        
+        .text-muted {
+            color: #737373;
+        }
+        
+        .text-success {
+            color: #22c55e;
+        }
+        
+        .text-danger {
+            color: #ef4444;
+        }
+        
+        .divider {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .loading-dot {
+            width: 4px;
+            height: 4px;
+            background: #a3a3a3;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <div class="container mx-auto p-4 max-w-6xl">
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">☕ La Cagnotte du Café</h1>
-            <p class="text-gray-600">Gérez votre café d'équipe facilement</p>
-            <div id="statusConnexion" class="mt-2">
-                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                    🔄 Connexion en cours...
-                </span>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-200 bg-white">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-900">Cagnotte Café</h1>
+                    <p class="text-sm text-gray-600 mt-1">Gestion collective des frais café</p>
+                </div>
+                
+                <div id="statusConnexion">
+                    <div class="status-badge px-3 py-1.5">
+                        <div class="flex items-center gap-2">
+                            <div class="loading-dot"></div>
+                            <span>Connexion...</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Solde Principal -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-6 text-center">
-            <h2 class="text-xl font-semibold text-gray-700 mb-2">Solde Actuel de la Cagnotte</h2>
-            <div id="solde" class="text-5xl font-bold text-green-600">0.00 €</div>
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        
+        <!-- Balance -->
+        <div class="balance-card card p-6 mb-8">
+            <div class="text-center">
+                <p class="text-sm font-medium text-white/80 mb-2">Solde actuel</p>
+                <div id="solde" class="text-4xl font-bold text-white">0.00 €</div>
+            </div>
         </div>
 
-        <!-- Bouton NETTOYAGE D'URGENCE -->
-        <div class="text-center mb-4">
-            <button onclick="nettoyageUrgence()" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 mr-4">
-                🧹 NETTOYAGE D'URGENCE
+        <!-- Nettoyage -->
+        <div class="text-center mb-8">
+            <button onclick="nettoyageUrgence()" class="btn btn-secondary px-4 py-2 text-sm">
+                Nettoyer les données corrompues
             </button>
-            <small class="text-gray-500">Supprime les données corrompues</small>
         </div>
 
-        <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="grid lg:grid-cols-3 gap-8">
             
-            <!-- Participants Section -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">👥 Participants</h3>
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Participants -->
+                <div class="card p-6">
+                    <h2 class="section-title">Participants</h2>
                     
-                    <!-- Ajouter un participant -->
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold mb-3">Ajouter un Participant</h4>
-                        <div class="flex gap-3">
-                            <input type="text" id="nomParticipant" placeholder="Nom du participant" 
-                                   class="flex-1 p-3 border border-gray-300 rounded-lg">
-                            <input type="number" id="contributionInitiale" placeholder="Contribution (€)" step="0.01" 
-                                   class="w-32 p-3 border border-gray-300 rounded-lg">
-                            <button onclick="ajouterParticipant()" 
-                                    class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                                ➕ Ajouter
+                    <!-- Add Form -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                        <h3 class="font-medium text-gray-900 mb-3">Ajouter un participant</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input 
+                                type="text" 
+                                id="nomParticipant" 
+                                placeholder="Nom" 
+                                class="input px-3 py-2 text-sm"
+                            >
+                            <input 
+                                type="number" 
+                                id="contributionInitiale" 
+                                placeholder="Contribution (€)" 
+                                step="0.01" 
+                                class="input px-3 py-2 text-sm"
+                            >
+                            <button onclick="ajouterParticipant()" class="btn btn-primary px-4 py-2 text-sm">
+                                Ajouter
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Liste des participants -->
+                    <!-- Participants List -->
                     <div id="listeParticipants">
-                        <div class="loading">🔄 Chargement des participants...</div>
+                        <div class="text-center py-12 text-gray-500">
+                            <div class="flex justify-center mb-3">
+                                <div class="loading-dot"></div>
+                            </div>
+                            <p class="text-sm">Chargement...</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Journal des Cafés Préparés -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">☕ Journal des Cafés Préparés</h3>
-                    <div class="mb-4">
-                        <select id="preparateurSelect" class="w-full p-3 border border-gray-300 rounded-lg mb-3">
+                <!-- Coffee Journal -->
+                <div class="card p-6">
+                    <h2 class="section-title">Journal des cafés</h2>
+                    
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                        <select id="preparateurSelect" class="input w-full px-3 py-2 text-sm mb-3">
                             <option value="">Qui a préparé le café ?</option>
                         </select>
-                        <button onclick="ajouterPreparation()" 
-                                class="w-full py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
-                            ☕ Marquer comme préparé
+                        <button onclick="ajouterPreparation()" class="btn btn-primary w-full px-4 py-2 text-sm">
+                            Marquer comme préparé
                         </button>
                     </div>
                     
-                    <!-- Préparations par jour -->
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <h4 class="font-semibold mb-3">Préparations par Jour</h4>
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-3">Préparations récentes</h3>
                         <div id="preparationsJour">
-                            <div class="loading">🔄 Chargement...</div>
+                            <div class="text-center py-8 text-gray-500">
+                                <div class="flex justify-center mb-3">
+                                    <div class="loading-dot"></div>
+                                </div>
+                                <p class="text-sm">Chargement...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Sidebar droite -->
-            <div class="space-y-6">
+            <!-- Right Column -->
+            <div class="space-y-8">
                 
-                <!-- Enregistrer une Dépense -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">💰 Enregistrer une Dépense</h3>
+                <!-- Expenses -->
+                <div class="card p-6">
+                    <h2 class="section-title">Nouvelle dépense</h2>
+                    
                     <div class="space-y-3">
-                        <input type="text" id="descriptionDepense" placeholder="Description (ex: Café, Lait...)" 
-                               class="w-full p-3 border border-gray-300 rounded-lg">
-                        <input type="number" id="montantDepense" placeholder="Montant (€)" step="0.01" 
-                               class="w-full p-3 border border-gray-300 rounded-lg">
-                        <button onclick="ajouterDepense()" 
-                                class="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600">
-                            💸 Enregistrer
+                        <input 
+                            type="text" 
+                            id="descriptionDepense" 
+                            placeholder="Description" 
+                            class="input w-full px-3 py-2 text-sm"
+                        >
+                        <input 
+                            type="number" 
+                            id="montantDepense" 
+                            placeholder="Montant (€)" 
+                            step="0.01" 
+                            class="input w-full px-3 py-2 text-sm"
+                        >
+                        <button onclick="ajouterDepense()" class="btn btn-danger w-full px-4 py-2 text-sm">
+                            Enregistrer la dépense
                         </button>
                     </div>
                 </div>
 
-                <!-- Stock de Fournitures -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">📦 Stock de Fournitures</h3>
+                <!-- Stock -->
+                <div class="card p-6">
+                    <h2 class="section-title">Stock</h2>
                     
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span>☕ Sacs de café</span>
-                            <div class="flex items-center gap-2">
-                                <button onclick="modifierStock('cafe', -1)" class="px-3 py-1 bg-red-500 text-white rounded">-</button>
-                                <span id="stockCafe" class="font-bold min-w-[2rem] text-center">0</span>
-                                <button onclick="modifierStock('cafe', 1)" class="px-3 py-1 bg-green-500 text-white rounded">+</button>
+                    <div class="space-y-3">
+                        <div class="stock-item p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Sacs de café</span>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="modifierStock('cafe', -1)" class="btn btn-secondary w-8 h-8 text-xs">-</button>
+                                    <span id="stockCafe" class="font-medium text-sm min-w-[2rem] text-center">0</span>
+                                    <button onclick="modifierStock('cafe', 1)" class="btn btn-secondary w-8 h-8 text-xs">+</button>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="flex justify-between items-center">
-                            <span>🔍 Boîtes de filtres</span>
-                            <div class="flex items-center gap-2">
-                                <button onclick="modifierStock('filtres', -1)" class="px-3 py-1 bg-red-500 text-white rounded">-</button>
-                                <span id="stockFiltres" class="font-bold min-w-[2rem] text-center">0</span>
-                                <button onclick="modifierStock('filtres', 1)" class="px-3 py-1 bg-green-500 text-white rounded">+</button>
+                        <div class="stock-item p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Filtres</span>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="modifierStock('filtres', -1)" class="btn btn-secondary w-8 h-8 text-xs">-</button>
+                                    <span id="stockFiltres" class="font-medium text-sm min-w-[2rem] text-center">0</span>
+                                    <button onclick="modifierStock('filtres', 1)" class="btn btn-secondary w-8 h-8 text-xs">+</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Historique -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">📜 Historique des Transactions</h3>
-                    <div id="historiqueTransactions" class="max-h-64 overflow-y-auto">
-                        <div class="loading">🔄 Chargement...</div>
+                <!-- History -->
+                <div class="card p-6">
+                    <h2 class="section-title">Historique</h2>
+                    
+                    <div id="historiqueTransactions" class="space-y-2 max-h-80 overflow-y-auto">
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="flex justify-center mb-3">
+                                <div class="loading-dot"></div>
+                            </div>
+                            <p class="text-sm">Chargement...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -204,7 +399,7 @@
             serverTimestamp 
         } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        // Configuration Firebase avec VOS vraies clés
+        // Configuration Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCZi2ttG9mf_87p_Cwph5cZNtJqc7sFuoY",
             authDomain: "cagnotte-cafe.firebaseapp.com",
@@ -229,13 +424,22 @@
         function mettreAJourStatutConnexion(statut) {
             const statusElement = document.getElementById('statusConnexion');
             const statuts = {
-                'connexion': { text: '🔄 Connexion en cours...', class: 'bg-yellow-100 text-yellow-800' },
-                'connecte': { text: '✅ Connecté - Équipe synchronisée', class: 'bg-green-100 text-green-800' },
-                'erreur': { text: '❌ Erreur de connexion', class: 'bg-red-100 text-red-800' }
+                'connexion': { 
+                    html: '<div class="flex items-center gap-2"><div class="loading-dot"></div><span>Connexion...</span></div>', 
+                    class: 'status-badge px-3 py-1.5' 
+                },
+                'connecte': { 
+                    html: '<div class="flex items-center gap-2"><div class="w-2 h-2 bg-green-500 rounded-full"></div><span>Synchronisé</span></div>', 
+                    class: 'status-connected px-3 py-1.5' 
+                },
+                'erreur': { 
+                    html: '<div class="flex items-center gap-2"><div class="w-2 h-2 bg-red-500 rounded-full"></div><span>Erreur</span></div>', 
+                    class: 'status-error px-3 py-1.5' 
+                }
             };
             
             const config = statuts[statut] || statuts['erreur'];
-            statusElement.innerHTML = `<span class="px-3 py-1 ${config.class} rounded-full text-sm">${config.text}</span>`;
+            statusElement.innerHTML = `<div class="${config.class}">${config.html}</div>`;
         }
 
         // === FIREBASE FONCTIONS ===
@@ -243,7 +447,7 @@
             try {
                 mettreAJourStatutConnexion('connexion');
                 
-                // Charger participants (avec filtre pour éviter les données corrompues)
+                // Charger participants
                 const participantsSnapshot = await getDocs(collection(db, 'participants'));
                 participants = participantsSnapshot.docs
                     .map(doc => {
@@ -256,7 +460,7 @@
                             contributions: data.contributions || []
                         };
                     })
-                    .filter(p => p.nom && p.nom !== 'undefined' && p.nom.trim() !== ''); // Filtrer les données invalides
+                    .filter(p => p.nom && p.nom !== 'undefined' && p.nom.trim() !== '');
 
                 // Charger transactions
                 const transactionsSnapshot = await getDocs(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')));
@@ -289,14 +493,13 @@
 
         // === FONCTIONS DE NETTOYAGE ===
         window.nettoyageUrgence = async function() {
-            if (!confirm('⚠️ ATTENTION ! Cela va supprimer TOUS les participants avec des noms invalides (undefined, vides). Continuer ?')) {
+            if (!confirm('Supprimer tous les participants avec des noms invalides ?')) {
                 return;
             }
             
             try {
                 mettreAJourStatutConnexion('connexion');
                 
-                // Supprimer tous les participants invalides
                 const participantsSnapshot = await getDocs(collection(db, 'participants'));
                 const suppressions = [];
                 
@@ -309,15 +512,15 @@
                 
                 if (suppressions.length > 0) {
                     await Promise.all(suppressions);
-                    alert(`✅ ${suppressions.length} participants invalides supprimés !`);
+                    alert(`${suppressions.length} participants invalides supprimés`);
                 } else {
-                    alert('✅ Aucun participant invalide trouvé !');
+                    alert('Aucun participant invalide trouvé');
                 }
                 
                 mettreAJourStatutConnexion('connecte');
             } catch (error) {
                 console.error('Erreur nettoyage:', error);
-                alert('❌ Erreur lors du nettoyage: ' + error.message);
+                alert('Erreur lors du nettoyage');
                 mettreAJourStatutConnexion('erreur');
             }
         };
@@ -327,14 +530,13 @@
             const nom = document.getElementById('nomParticipant').value.trim();
             const contribution = parseFloat(document.getElementById('contributionInitiale').value) || 0;
             
-            if (nom === '' || nom === 'undefined' || !nom) {
-                alert('❌ Veuillez entrer un nom valide');
+            if (!nom || nom === 'undefined') {
+                alert('Veuillez entrer un nom valide');
                 return;
             }
             
-            // Vérifier si le participant existe déjà
             if (participants.find(p => p.nom && p.nom.toLowerCase() === nom.toLowerCase())) {
-                alert('❌ Ce participant existe déjà !');
+                alert('Ce participant existe déjà');
                 return;
             }
             
@@ -348,29 +550,24 @@
                     timestamp: serverTimestamp()
                 };
                 
-                console.log('Ajout participant:', participant);
-                
                 const docRef = await addDoc(collection(db, 'participants'), participant);
-                console.log('Participant ajouté avec ID:', docRef.id);
                 
                 if (contribution > 0) {
-                    await ajouterTransaction(`💰 Contribution de ${nom}`, contribution, 'contribution', nom);
+                    await ajouterTransaction(`Contribution de ${nom}`, contribution, 'contribution', nom);
                 }
                 
                 document.getElementById('nomParticipant').value = '';
                 document.getElementById('contributionInitiale').value = '';
                 
-                alert(`✅ ${nom} ajouté avec succès !`);
             } catch (error) {
                 console.error('Erreur ajout participant:', error);
-                alert('❌ Erreur lors de l\'ajout du participant: ' + error.message);
+                alert('Erreur lors de l\'ajout du participant');
             }
         };
 
         window.ajouterContributionParticipant = async function(participantId, montant) {
             const montantFloat = parseFloat(montant);
             if (!montantFloat || montantFloat === 0) {
-                alert('❌ Veuillez entrer un montant valide');
                 return;
             }
             
@@ -384,25 +581,22 @@
                 };
                 
                 const nouvellesContributions = [...(participant.contributions || []), contribution];
-                const nouveauTotal = participant.totalContribue + montantFloat;
+                const nouveauTotal = (participant.totalContribue || 0) + contribution.montant;
                 
                 await updateDoc(doc(db, 'participants', participantId), {
                     contributions: nouvellesContributions,
                     totalContribue: nouveauTotal
                 });
                 
-                await ajouterTransaction(`💰 Contribution de ${participant.nom}`, montantFloat, 'contribution', participant.nom);
-                await chargerDonnees();
+                await ajouterTransaction(`Contribution de ${participant.nom}`, contribution.montant, 'contribution', participant.nom);
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('❌ Erreur lors de l\'ajout de la contribution');
             }
         };
 
         window.retirerContributionParticipant = async function(participantId, montant) {
             const montantFloat = parseFloat(montant);
             if (!montantFloat || montantFloat === 0) {
-                alert('❌ Veuillez entrer un montant valide');
                 return;
             }
             
@@ -423,11 +617,9 @@
                     totalContribue: nouveauTotal
                 });
                 
-                await ajouterTransaction(`❌ Retrait de ${participant.nom}`, montantFloat, 'retrait', participant.nom);
-                await chargerDonnees();
+                await ajouterTransaction(`Retrait de ${participant.nom}`, montantFloat, 'retrait', participant.nom);
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('❌ Erreur lors du retrait');
             }
         };
 
@@ -436,8 +628,8 @@
             const description = document.getElementById('descriptionDepense').value.trim();
             const montant = parseFloat(document.getElementById('montantDepense').value) || 0;
             
-            if (description === '' || montant <= 0) {
-                alert('❌ Veuillez remplir tous les champs correctement');
+            if (!description || montant <= 0) {
+                alert('Veuillez remplir tous les champs');
                 return;
             }
             
@@ -447,11 +639,8 @@
                 document.getElementById('descriptionDepense').value = '';
                 document.getElementById('montantDepense').value = '';
                 
-                alert('✅ Dépense enregistrée !');
-                await chargerDonnees();
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('❌ Erreur lors de l\'ajout de la dépense');
             }
         };
 
@@ -461,7 +650,7 @@
             const participantNom = selecteur.value;
             
             if (!participantNom) {
-                alert('❌ Veuillez sélectionner qui a préparé le café');
+                alert('Veuillez sélectionner qui a préparé le café');
                 return;
             }
             
@@ -483,11 +672,9 @@
                 await addDoc(collection(db, 'preparations'), preparation);
                 
                 selecteur.value = '';
-                alert(`☕ ${participantNom} a préparé un café !`);
-                await chargerDonnees();
+                
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('❌ Erreur lors de l\'ajout de la préparation');
             }
         };
 
@@ -499,7 +686,6 @@
                     [type]: Math.max(0, (stock[type] || 0) + quantite)
                 };
                 
-                // Mettre à jour ou créer le document stock
                 const stockSnapshot = await getDocs(collection(db, 'stock'));
                 if (stockSnapshot.empty) {
                     await addDoc(collection(db, 'stock'), nouveauStock);
@@ -507,11 +693,8 @@
                     const stockDoc = stockSnapshot.docs[0];
                     await updateDoc(stockDoc.ref, nouveauStock);
                 }
-                
-                await chargerDonnees();
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('❌ Erreur lors de la modification du stock');
             }
         };
 
@@ -551,7 +734,6 @@
             const soldeElement = document.getElementById('solde');
             if (soldeElement) {
                 soldeElement.textContent = `${solde.toFixed(2)} €`;
-                soldeElement.className = `text-5xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`;
             }
             
             afficherParticipants();
@@ -566,35 +748,44 @@
             if (!container) return;
             
             if (participants.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-8">Aucun participant pour le moment.</p>';
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <p class="text-sm">Aucun participant</p>
+                    </div>
+                `;
                 return;
             }
             
             container.innerHTML = participants.map(p => `
-                <div class="participant-card ${(p.totalContribue || 0) >= 0 ? 'positive-contrib' : 'negative-contrib'}">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-lg">${p.nom}</h4>
-                            <p class="text-sm opacity-90">
-                                Total: ${p.totalContribue.toFixed(2)}€
-                                <span class="preparation-counter">☕ ${p.preparationsCompte || 0}</span>
-                            </p>
+                <div class="participant-card ${(p.totalContribue || 0) >= 0 ? 'participant-positive' : 'participant-negative'} p-4 mb-3">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">${p.nom}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-sm ${(p.totalContribue || 0) >= 0 ? 'text-success' : 'text-danger'} font-medium">
+                                    ${(p.totalContribue || 0).toFixed(2)}€
+                                </span>
+                                ${(p.preparationsCompte || 0) > 0 ? `<span class="preparation-count">${p.preparationsCompte || 0} ☕</span>` : ''}
+                            </div>
                         </div>
-                        <div class="text-3xl">
-                            ${p.totalContribue >= 0 ? '😊' : '😰'}
+                        <div class="text-xl">
+                            ${(p.totalContribue || 0) >= 0 ? '😊' : '😰'}
                         </div>
                     </div>
                     
-                    <div class="mt-3 flex gap-2">
-                        <input type="number" id="contrib-${p.id}" placeholder="Montant" step="0.01" 
-                               class="flex-1 p-2 rounded bg-white/20 text-white placeholder-white/70">
+                    <div class="flex gap-2">
+                        <input type="number" 
+                               id="contrib-${p.id}" 
+                               placeholder="Montant" 
+                               step="0.01" 
+                               class="input flex-1 px-2 py-1 text-sm">
                         <button onclick="ajouterContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
-                                class="px-4 py-2 bg-green-500/80 rounded text-white hover:bg-green-600">
-                            ➕
+                                class="btn btn-success px-3 py-1 text-xs">
+                            +
                         </button>
                         <button onclick="retirerContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
-                                class="px-4 py-2 bg-red-500/80 rounded text-white hover:bg-red-600">
-                            ➖
+                                class="btn btn-danger px-3 py-1 text-xs">
+                            −
                         </button>
                     </div>
                 </div>
@@ -606,7 +797,11 @@
             if (!container) return;
             
             if (transactions.length === 0) {
-                container.innerHTML = '<p class="text-gray-500">Aucune transaction pour le moment.</p>';
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p class="text-sm">Aucune transaction</p>
+                    </div>
+                `;
                 return;
             }
             
@@ -614,30 +809,34 @@
             
             container.innerHTML = transactionsRecentes.map(t => {
                 const typeIcon = {
-                    'contribution': '💰',
-                    'depense': '💸',
-                    'retrait': '❌'
-                }[t.type] || '💸';
+                    'contribution': '↗',
+                    'depense': '↙',
+                    'retrait': '↙'
+                }[t.type] || '↙';
                 
                 const typeColor = {
-                    'contribution': 'text-green-600',
-                    'depense': 'text-red-600',
-                    'retrait': 'text-orange-600'
-                }[t.type] || 'text-red-600';
+                    'contribution': 'text-success',
+                    'depense': 'text-danger',
+                    'retrait': 'text-danger'
+                }[t.type] || 'text-danger';
                 
                 return `
-                    <div class="border-b border-gray-200 pb-2 mb-2">
-                        <div class="flex justify-between items-center">
+                    <div class="transaction-item p-3">
+                        <div class="flex items-center justify-between">
                             <div class="flex-1">
-                                <span class="text-lg">${typeIcon}</span>
-                                <span class="font-medium">${t.description}</span>
-                                ${t.participant ? `<br><small class="text-gray-500">par ${t.participant}</small>` : ''}
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs ${typeColor}">${typeIcon}</span>
+                                    <span class="text-sm font-medium text-gray-900 truncate">${t.description}</span>
+                                </div>
+                                ${t.participant ? `<p class="text-xs text-muted">par ${t.participant}</p>` : ''}
+                                <p class="text-xs text-muted">${t.date} ${t.heure}</p>
                             </div>
-                            <span class="font-bold ${typeColor}">
-                                ${t.type === 'contribution' ? '+' : '-'}${t.montant.toFixed(2)}€
-                            </span>
+                            <div class="text-right">
+                                <div class="text-sm font-medium ${typeColor}">
+                                    ${t.type === 'contribution' ? '+' : '−'}${t.montant.toFixed(2)}€
+                                </div>
+                            </div>
                         </div>
-                        <small class="text-gray-500">${t.date} à ${t.heure}</small>
                     </div>
                 `;
             }).join('');
@@ -648,7 +847,11 @@
             if (!container) return;
             
             if (preparations.length === 0) {
-                container.innerHTML = '<p class="text-gray-500">Aucune préparation pour le moment.</p>';
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p class="text-sm">Aucune préparation</p>
+                    </div>
+                `;
                 return;
             }
             
@@ -666,10 +869,13 @@
             container.innerHTML = jours.map(jour => {
                 const prepsJour = preparationsParJour[jour];
                 return `
-                    <div class="mb-3">
-                        <h5 class="font-semibold text-gray-800">${jour} (${prepsJour.length} café${prepsJour.length > 1 ? 's' : ''})</h5>
-                        <div class="text-sm text-gray-600">
-                            ${prepsJour.slice(-3).map(p => `${p.heure} - ${p.preparateur}`).join(' • ')}
+                    <div class="transaction-item p-3 mb-2">
+                        <h5 class="text-sm font-medium text-gray-900 mb-1">${jour}</h5>
+                        <div class="text-xs text-muted">
+                            ${prepsJour.length} café${prepsJour.length > 1 ? 's' : ''}
+                        </div>
+                        <div class="text-xs text-muted mt-1">
+                            ${prepsJour.slice(-3).map(p => `${p.heure} ${p.preparateur}`).join(' • ')}
                         </div>
                     </div>
                 `;
@@ -694,7 +900,7 @@
 
         // === ÉCOUTE EN TEMPS RÉEL ===
         function configurerEcouteTempsReel() {
-            // Écouter les participants (avec filtre)
+            // Écouter les participants
             onSnapshot(collection(db, 'participants'), (snapshot) => {
                 participants = snapshot.docs
                     .map(doc => {
@@ -707,7 +913,7 @@
                             contributions: data.contributions || []
                         };
                     })
-                    .filter(p => p.nom && p.nom !== 'undefined' && p.nom.trim() !== ''); // Filtrer les données invalides
+                    .filter(p => p.nom && p.nom !== 'undefined' && p.nom.trim() !== '');
                 mettreAJourInterface();
             });
 
@@ -740,10 +946,8 @@
 
         // === INITIALISATION ===
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('☕ Initialisation de la cagnotte du café...');
             chargerDonnees().then(() => {
                 configurerEcouteTempsReel();
-                console.log('✅ Cagnotte du café chargée avec synchronisation temps réel !');
             });
         });
     </script>
