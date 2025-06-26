@@ -413,6 +413,15 @@
         let preparations = [];
         let stock = { cafe: 0, filtres: 0 };
 
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // === STATUT CONNEXION ===
         function mettreAJourStatutConnexion(statut) {
             const statusElement = document.getElementById('statusConnexion');
@@ -769,7 +778,7 @@
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex-1">
                             <h4 class="font-medium text-gray-900 flex items-center gap-2">
-                                ${p.nom}
+                                ${escapeHtml(p.nom)}
                                 <span class="text-xs text-muted">${p.cafesBus || 0} ☕</span>
                             </h4>
                             <div class="flex items-center gap-2 mt-1">
@@ -838,10 +847,10 @@
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-xs ${typeColor}">${typeIcon}</span>
-                                    <span class="text-sm font-medium text-gray-900 truncate">${t.description}</span>
+                                    <span class="text-sm font-medium text-gray-900 truncate">${escapeHtml(t.description)}</span>
                                 </div>
-                                ${t.participant ? `<p class="text-xs text-muted">par ${t.participant}</p>` : ''}
-                                <p class="text-xs text-muted">${t.date} ${t.heure}</p>
+                                ${t.participant ? `<p class="text-xs text-muted">par ${escapeHtml(t.participant)}</p>` : ''}
+                                <p class="text-xs text-muted">${escapeHtml(t.date)} ${escapeHtml(t.heure)}</p>
                             </div>
                             <div class="text-right">
                                 <div class="text-sm font-medium ${typeColor}">
@@ -887,7 +896,7 @@
                             ${prepsJour.length} café${prepsJour.length > 1 ? 's' : ''}
                         </div>
                         <div class="text-xs text-muted mt-1">
-                            ${prepsJour.slice(-3).map(p => `${p.heure} ${p.preparateur}`).join(' • ')}
+                            ${prepsJour.slice(-3).map(p => `${escapeHtml(p.heure)} ${escapeHtml(p.preparateur)}`).join(' • ')}
                         </div>
                     </div>
                 `;
@@ -907,7 +916,7 @@
             if (!selecteur) return;
             
             selecteur.innerHTML = '<option value="">Qui a préparé le café ?</option>' +
-                participants.map(p => `<option value="${p.nom}">${p.nom}</option>`).join('');
+                participants.map(p => `<option value="${escapeHtml(p.nom)}">${escapeHtml(p.nom)}</option>`).join('');
         }
 
         // === ÉCOUTE EN TEMPS RÉEL ===
