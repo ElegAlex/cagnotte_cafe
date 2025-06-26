@@ -72,6 +72,15 @@
             <div id="solde" class="text-5xl font-bold text-green-600">0.00 €</div>
         </div>
 
+        <!-- Bouton NETTOYAGE D'URGENCE -->
+        <div class="text-center mb-4">
+            <button onclick="nettoyageUrgence()" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 mr-4">
+                🧹 NETTOYAGE D'URGENCE
+            </button>
+            <small class="text-gray-500">Supprime les données corrompues</small>
+        </div>
+
         <div class="grid lg:grid-cols-3 gap-6">
             
             <!-- Participants Section -->
@@ -234,18 +243,20 @@
             try {
                 mettreAJourStatutConnexion('connexion');
                 
-                // Charger participants
+                // Charger participants (avec filtre pour éviter les données corrompues)
                 const participantsSnapshot = await getDocs(collection(db, 'participants'));
-                participants = participantsSnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        totalContribue: data.totalContribue || 0,
-                        preparationsCompte: data.preparationsCompte || 0,
-                        contributions: data.contributions || []
-                    };
-                });
+                participants = participantsSnapshot.docs
+                    .map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            ...data,
+                            totalContribue: data.totalContribue || 0,
+                            preparationsCompte: data.preparationsCompte || 0,
+                            contributions: data.contributions || []
+                        };
+                    })
+                    .filter(p => p.nom && p.nom !== 'undefined' && p.nom.trim() !== ''); // Filtrer les données invalides
 
                 // Charger transactions
                 const transactionsSnapshot = await getDocs(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')));
@@ -276,18 +287,53 @@
             }
         }
 
+        // === FONCTIONS DE NETTOYAGE ===
+        window.nettoyageUrgence = async function() {
+            if (!confirm('⚠️ ATTENTION ! Cela va supprimer TOUS les participants avec des noms invalides (undefined, vides). Continuer ?')) {
+                return;
+            }
+            
+            try {
+                mettreAJourStatutConnexion('connexion');
+                
+                // Supprimer tous les participants invalides
+                const participantsSnapshot = await getDocs(collection(db, 'participants'));
+                const suppressions = [];
+                
+                participantsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.nom || data.nom === 'undefined' || data.nom.trim() === '') {
+                        suppressions.push(deleteDoc(doc.ref));
+                    }
+                });
+                
+                if (suppressions.length > 0) {
+                    await Promise.all(suppressions);
+                    alert(`✅ ${suppressions.length} participants invalides supprimés !`);
+                } else {
+                    alert('✅ Aucun participant invalide trouvé !');
+                }
+                
+                mettreAJourStatutConnexion('connecte');
+            } catch (error) {
+                console.error('Erreur nettoyage:', error);
+                alert('❌ Erreur lors du nettoyage: ' + error.message);
+                mettreAJourStatutConnexion('erreur');
+            }
+        };
+
         // === FONCTIONS PARTICIPANTS ===
         window.ajouterParticipant = async function() {
             const nom = document.getElementById('nomParticipant').value.trim();
             const contribution = parseFloat(document.getElementById('contributionInitiale').value) || 0;
             
-            if (nom === '') {
-                alert('❌ Veuillez entrer un nom');
+            if (nom === '' || nom === 'undefined' || !nom) {
+                alert('❌ Veuillez entrer un nom valide');
                 return;
             }
             
             // Vérifier si le participant existe déjà
-            if (participants.find(p => p.nom.toLowerCase() === nom.toLowerCase())) {
+            if (participants.find(p => p.nom && p.nom.toLowerCase() === nom.toLowerCase())) {
                 alert('❌ Ce participant existe déjà !');
                 return;
             }
@@ -298,10 +344,14 @@
                     contributions: contribution > 0 ? [{ montant: contribution, date: new Date().toISOString() }] : [],
                     preparationsCompte: 0,
                     totalContribue: contribution,
+                    dateCreation: new Date().toISOString(),
                     timestamp: serverTimestamp()
                 };
                 
-                await addDoc(collection(db, 'participants'), participant);
+                console.log('Ajout participant:', participant);
+                
+                const docRef = await addDoc(collection(db, 'participants'), participant);
+                console.log('Participant ajouté avec ID:', docRef.id);
                 
                 if (contribution > 0) {
                     await ajouterTransaction(`💰 Contribution de ${nom}`, contribution, 'contribution', nom);
@@ -311,10 +361,9 @@
                 document.getElementById('contributionInitiale').value = '';
                 
                 alert(`✅ ${nom} ajouté avec succès !`);
-                await chargerDonnees();
             } catch (error) {
-                console.error('Erreur:', error);
-                alert('❌ Erreur lors de l\'ajout du participant');
+                console.error('Erreur ajout participant:', error);
+                alert('❌ Erreur lors de l\'ajout du participant: ' + error.message);
             }
         };
 
@@ -645,18 +694,20 @@
 
         // === ÉCOUTE EN TEMPS RÉEL ===
         function configurerEcouteTempsReel() {
-            // Écouter les participants
+            // Écouter les participants (avec filtre)
             onSnapshot(collection(db, 'participants'), (snapshot) => {
-                participants = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        totalContribue: data.totalContribue || 0,
-                        preparationsCompte: data.preparationsCompte || 0,
-                        contributions: data.contributions || []
-                    };
-                });
+                participants = snapshot.docs
+                    .map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            ...data,
+                            totalContribue: data.totalContribue || 0,
+                            preparationsCompte: data.preparationsCompte || 0,
+                            contributions: data.contributions || []
+                        };
+                    })
+                    .filter(p => p.nom && p.nom !== 'undefined' && p.nom.trim() !== ''); // Filtrer les données invalides
                 mettreAJourInterface();
             });
 
