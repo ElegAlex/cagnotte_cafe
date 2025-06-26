@@ -5,81 +5,169 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Cagnotte du Café ☕</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-amber-50 font-sans">
-    <div class="container mx-auto p-6 max-w-4xl">
-        <h1 class="text-4xl font-bold text-center text-amber-800 mb-8">☕ Cagnotte du Café</h1>
+    <style>
+        /* Styles custom pour votre design original */
+        .participant-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+            padding: 16px;
+            margin: 8px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
         
-        <!-- Solde -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6 text-center">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-2">Solde Actuel</h2>
-            <div id="solde" class="text-4xl font-bold text-green-600">0.00 €</div>
+        .emoji-large {
+            font-size: 2rem;
+        }
+        
+        .counter-individual {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .negative-contrib {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+        
+        .positive-contrib {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        }
+        
+        .preparation-counter {
+            display: inline-block;
+            background: #ffd43b;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto p-4 max-w-6xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">☕ La Cagnotte du Café</h1>
+            <p class="text-gray-600">Gérez votre café d'équipe facilement</p>
+        </header>
+
+        <!-- Solde Principal -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6 text-center">
+            <h2 class="text-xl font-semibold text-gray-700 mb-2">Solde Actuel de la Cagnotte</h2>
+            <div id="solde" class="text-5xl font-bold text-green-600">0.00 €</div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="grid lg:grid-cols-3 gap-6">
             
-            <!-- Ajouter Participant -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">👤 Ajouter un Participant</h3>
-                <div class="space-y-4">
-                    <input type="text" id="nomParticipant" placeholder="Nom du participant" 
-                           class="w-full p-3 border border-gray-300 rounded-lg">
-                    <input type="number" id="contribution" placeholder="Contribution (€)" step="0.01" 
-                           class="w-full p-3 border border-gray-300 rounded-lg">
-                    <button onclick="ajouterParticipant()" 
-                            class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600">
-                        Ajouter
-                    </button>
+            <!-- Participants Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">👥 Participants</h3>
+                    
+                    <!-- Ajouter un participant -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold mb-3">Ajouter un Participant</h4>
+                        <div class="flex gap-3">
+                            <input type="text" id="nomParticipant" placeholder="Nom du participant" 
+                                   class="flex-1 p-3 border border-gray-300 rounded-lg">
+                            <input type="number" id="contributionInitiale" placeholder="Contribution (€)" step="0.01" 
+                                   class="w-32 p-3 border border-gray-300 rounded-lg">
+                            <button onclick="ajouterParticipant()" 
+                                    class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                ➕ Ajouter
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des participants -->
+                    <div id="listeParticipants">
+                        <p class="text-gray-500 text-center py-8">Aucun participant pour le moment.</p>
+                    </div>
+                </div>
+
+                <!-- Journal des Cafés Préparés -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">☕ Journal des Cafés Préparés</h3>
+                    <div class="mb-4">
+                        <select id="preparateurSelect" class="w-full p-3 border border-gray-300 rounded-lg mb-3">
+                            <option value="">Qui a préparé le café ?</option>
+                        </select>
+                        <button onclick="ajouterPreparation()" 
+                                class="w-full py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+                            ☕ Marquer comme préparé
+                        </button>
+                    </div>
+                    
+                    <!-- Préparations par jour -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold mb-3">Préparations par Jour</h4>
+                        <div id="preparationsJour">
+                            <p class="text-gray-500">Aucune préparation pour le moment.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Enregistrer Dépense -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">💰 Enregistrer une Dépense</h3>
-                <div class="space-y-4">
-                    <input type="text" id="descriptionDepense" placeholder="Description (ex: Café, Lait...)" 
-                           class="w-full p-3 border border-gray-300 rounded-lg">
-                    <input type="number" id="montantDepense" placeholder="Montant (€)" step="0.01" 
-                           class="w-full p-3 border border-gray-300 rounded-lg">
-                    <button onclick="ajouterDepense()" 
-                            class="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600">
-                        Enregistrer
-                    </button>
+            <!-- Sidebar droite -->
+            <div class="space-y-6">
+                
+                <!-- Enregistrer une Dépense -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">💰 Enregistrer une Dépense</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="descriptionDepense" placeholder="Description (ex: Café, Lait...)" 
+                               class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="number" id="montantDepense" placeholder="Montant (€)" step="0.01" 
+                               class="w-full p-3 border border-gray-300 rounded-lg">
+                        <button onclick="ajouterDepense()" 
+                                class="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                            💸 Enregistrer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stock de Fournitures -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">📦 Stock de Fournitures</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span>☕ Sacs de café</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="modifierStock('cafe', -1)" class="px-3 py-1 bg-red-500 text-white rounded">-</button>
+                                <span id="stockCafe" class="font-bold min-w-[2rem] text-center">0</span>
+                                <button onclick="modifierStock('cafe', 1)" class="px-3 py-1 bg-green-500 text-white rounded">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span>🔍 Boîtes de filtres</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="modifierStock('filtres', -1)" class="px-3 py-1 bg-red-500 text-white rounded">-</button>
+                                <span id="stockFiltres" class="font-bold min-w-[2rem] text-center">0</span>
+                                <button onclick="modifierStock('filtres', 1)" class="px-3 py-1 bg-green-500 text-white rounded">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historique -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">📜 Historique des Transactions</h3>
+                    <div id="historiqueTransactions" class="max-h-64 overflow-y-auto">
+                        <p class="text-gray-500">Aucune transaction pour le moment.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Participants -->
-        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">👥 Participants</h3>
-            <div id="listeParticipants">
-                <p class="text-gray-500">Aucun participant pour le moment.</p>
-            </div>
-        </div>
-
-        <!-- Historique -->
-        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">📜 Historique des Transactions</h3>
-            <div id="listeTransactions">
-                <p class="text-gray-500">Aucune transaction pour le moment.</p>
-            </div>
-        </div>
-
-        <!-- Boutons utiles -->
-        <div class="flex gap-4 mt-6">
-            <button onclick="exporterDonnees()" 
-                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600">
-                📥 Exporter
-            </button>
-            <button onclick="viderDonnees()" 
-                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600">
-                🗑️ Reset
-            </button>
         </div>
     </div>
 
     <script>
-        // === STOCKAGE SIMPLE ===
+        // === STOCKAGE LOCAL ===
         function sauvegarder(cle, donnees) {
             localStorage.setItem(cle, JSON.stringify(donnees));
         }
@@ -90,77 +178,148 @@
         }
 
         // === DONNÉES ===
-        let participants = charger('participants');
-        let transactions = charger('transactions');
+        let participants = charger('participants') || [];
+        let transactions = charger('transactions') || [];
+        let preparations = charger('preparations') || [];
+        let stock = charger('stock') || { cafe: 0, filtres: 0 };
 
-        // === FONCTIONS PRINCIPALES ===
+        // === FONCTIONS PARTICIPANTS ===
         function ajouterParticipant() {
             const nom = document.getElementById('nomParticipant').value.trim();
-            const contribution = parseFloat(document.getElementById('contribution').value) || 0;
+            const contribution = parseFloat(document.getElementById('contributionInitiale').value) || 0;
             
             if (nom === '') {
-                alert('Veuillez entrer un nom');
+                alert('❌ Veuillez entrer un nom');
                 return;
             }
             
-            if (contribution <= 0) {
-                alert('La contribution doit être positive');
+            // Vérifier si le participant existe déjà
+            if (participants.find(p => p.nom.toLowerCase() === nom.toLowerCase())) {
+                alert('❌ Ce participant existe déjà !');
                 return;
             }
             
             const participant = {
                 id: Date.now(),
                 nom: nom,
-                contribution: contribution,
-                date: new Date().toLocaleDateString('fr-FR')
+                contributions: contribution > 0 ? [{ montant: contribution, date: new Date().toISOString() }] : [],
+                preparationsCompte: 0,
+                totalContribue: contribution
             };
             
             participants.push(participant);
             sauvegarder('participants', participants);
             
-            // Ajouter comme transaction
-            ajouterTransaction(`Contribution de ${nom}`, contribution, 'contribution');
+            if (contribution > 0) {
+                ajouterTransaction(`💰 Contribution de ${nom}`, contribution, 'contribution', nom);
+            }
             
-            // Vider le formulaire
             document.getElementById('nomParticipant').value = '';
-            document.getElementById('contribution').value = '';
+            document.getElementById('contributionInitiale').value = '';
             
             mettreAJourInterface();
-            
-            alert(`${nom} ajouté avec succès !`);
+            alert(`✅ ${nom} ajouté avec succès !`);
         }
 
+        function ajouterContributionParticipant(participantId, montant) {
+            const participant = participants.find(p => p.id === participantId);
+            if (!participant) return;
+            
+            const contribution = {
+                montant: parseFloat(montant),
+                date: new Date().toISOString()
+            };
+            
+            participant.contributions.push(contribution);
+            participant.totalContribue += contribution.montant;
+            
+            sauvegarder('participants', participants);
+            ajouterTransaction(`💰 Contribution de ${participant.nom}`, contribution.montant, 'contribution', participant.nom);
+            mettreAJourInterface();
+        }
+
+        function retirerContributionParticipant(participantId, montant) {
+            const participant = participants.find(p => p.id === participantId);
+            if (!participant) return;
+            
+            const retrait = {
+                montant: -parseFloat(montant),
+                date: new Date().toISOString()
+            };
+            
+            participant.contributions.push(retrait);
+            participant.totalContribue += retrait.montant;
+            
+            sauvegarder('participants', participants);
+            ajouterTransaction(`❌ Retrait de ${participant.nom}`, Math.abs(retrait.montant), 'retrait', participant.nom);
+            mettreAJourInterface();
+        }
+
+        // === FONCTIONS DÉPENSES ===
         function ajouterDepense() {
             const description = document.getElementById('descriptionDepense').value.trim();
             const montant = parseFloat(document.getElementById('montantDepense').value) || 0;
             
-            if (description === '') {
-                alert('Veuillez entrer une description');
-                return;
-            }
-            
-            if (montant <= 0) {
-                alert('Le montant doit être positif');
+            if (description === '' || montant <= 0) {
+                alert('❌ Veuillez remplir tous les champs correctement');
                 return;
             }
             
             ajouterTransaction(description, montant, 'depense');
             
-            // Vider le formulaire
             document.getElementById('descriptionDepense').value = '';
             document.getElementById('montantDepense').value = '';
             
             mettreAJourInterface();
-            
-            alert('Dépense enregistrée !');
+            alert('✅ Dépense enregistrée !');
         }
 
-        function ajouterTransaction(description, montant, type) {
+        // === FONCTIONS PRÉPARATIONS ===
+        function ajouterPreparation() {
+            const selecteur = document.getElementById('preparateurSelect');
+            const participantNom = selecteur.value;
+            
+            if (!participantNom) {
+                alert('❌ Veuillez sélectionner qui a préparé le café');
+                return;
+            }
+            
+            const participant = participants.find(p => p.nom === participantNom);
+            if (participant) {
+                participant.preparationsCompte++;
+                sauvegarder('participants', participants);
+            }
+            
+            const preparation = {
+                id: Date.now(),
+                preparateur: participantNom,
+                date: new Date().toLocaleDateString('fr-FR'),
+                heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
+            };
+            
+            preparations.push(preparation);
+            sauvegarder('preparations', preparations);
+            
+            selecteur.value = '';
+            mettreAJourInterface();
+            alert(`☕ ${participantNom} a préparé un café !`);
+        }
+
+        // === FONCTIONS STOCK ===
+        function modifierStock(type, quantite) {
+            stock[type] = Math.max(0, (stock[type] || 0) + quantite);
+            sauvegarder('stock', stock);
+            mettreAJourInterface();
+        }
+
+        // === FONCTIONS TRANSACTIONS ===
+        function ajouterTransaction(description, montant, type, participant = null) {
             const transaction = {
                 id: Date.now(),
                 description: description,
                 montant: montant,
-                type: type, // 'contribution' ou 'depense'
+                type: type,
+                participant: participant,
                 date: new Date().toLocaleDateString('fr-FR'),
                 heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
             };
@@ -172,9 +331,15 @@
         // === AFFICHAGE ===
         function calculerSolde() {
             return transactions.reduce((total, transaction) => {
-                return transaction.type === 'contribution' 
-                    ? total + transaction.montant 
-                    : total - transaction.montant;
+                switch(transaction.type) {
+                    case 'contribution':
+                        return total + transaction.montant;
+                    case 'depense':
+                    case 'retrait':
+                        return total - transaction.montant;
+                    default:
+                        return total;
+                }
             }, 0);
         }
 
@@ -184,14 +349,14 @@
             const soldeElement = document.getElementById('solde');
             if (soldeElement) {
                 soldeElement.textContent = `${solde.toFixed(2)} €`;
-                soldeElement.style.color = solde >= 0 ? '#22c55e' : '#ef4444';
+                soldeElement.className = `text-5xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`;
             }
             
-            // Participants
             afficherParticipants();
-            
-            // Transactions
-            afficherTransactions();
+            afficherHistoriqueTransactions();
+            afficherPreparations();
+            afficherStock();
+            mettreAJourSelecteurPreparateur();
         }
 
         function afficherParticipants() {
@@ -199,23 +364,43 @@
             if (!container) return;
             
             if (participants.length === 0) {
-                container.innerHTML = '<p class="text-gray-500">Aucun participant pour le moment.</p>';
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">Aucun participant pour le moment.</p>';
                 return;
             }
             
             container.innerHTML = participants.map(p => `
-                <div class="flex justify-between items-center p-3 border-b border-gray-200">
-                    <div>
-                        <strong class="text-gray-800">${p.nom}</strong>
-                        <small class="text-gray-500 ml-2">(${p.date})</small>
+                <div class="participant-card ${p.totalContribue >= 0 ? 'positive-contrib' : 'negative-contrib'}">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-lg">${p.nom}</h4>
+                            <p class="text-sm opacity-90">
+                                Total: ${p.totalContribue.toFixed(2)}€
+                                <span class="preparation-counter">☕ ${p.preparationsCompte}</span>
+                            </p>
+                        </div>
+                        <div class="text-3xl">
+                            ${p.totalContribue >= 0 ? '😊' : '😰'}
+                        </div>
                     </div>
-                    <span class="font-bold text-green-600">+${p.contribution.toFixed(2)}€</span>
+                    
+                    <div class="mt-3 flex gap-2">
+                        <input type="number" id="contrib-${p.id}" placeholder="Montant" step="0.01" 
+                               class="flex-1 p-2 rounded bg-white/20 text-white placeholder-white/70">
+                        <button onclick="ajouterContributionParticipant(${p.id}, document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
+                                class="px-4 py-2 bg-green-500/80 rounded text-white hover:bg-green-600">
+                            ➕
+                        </button>
+                        <button onclick="retirerContributionParticipant(${p.id}, document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
+                                class="px-4 py-2 bg-red-500/80 rounded text-white hover:bg-red-600">
+                            ➖
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function afficherTransactions() {
-            const container = document.getElementById('listeTransactions');
+        function afficherHistoriqueTransactions() {
+            const container = document.getElementById('historiqueTransactions');
             if (!container) return;
             
             if (transactions.length === 0) {
@@ -225,54 +410,90 @@
             
             const transactionsRecentes = transactions.slice(-10).reverse();
             
-            container.innerHTML = transactionsRecentes.map(t => `
-                <div class="flex justify-between items-center p-3 border-b border-gray-200">
-                    <div>
-                        <strong class="text-gray-800">${t.description}</strong>
-                        <small class="text-gray-500 block">${t.date} à ${t.heure}</small>
+            container.innerHTML = transactionsRecentes.map(t => {
+                const typeIcon = {
+                    'contribution': '💰',
+                    'depense': '💸',
+                    'retrait': '❌'
+                }[t.type] || '💸';
+                
+                const typeColor = {
+                    'contribution': 'text-green-600',
+                    'depense': 'text-red-600',
+                    'retrait': 'text-orange-600'
+                }[t.type] || 'text-red-600';
+                
+                return `
+                    <div class="border-b border-gray-200 pb-2 mb-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1">
+                                <span class="text-lg">${typeIcon}</span>
+                                <span class="font-medium">${t.description}</span>
+                                ${t.participant ? `<br><small class="text-gray-500">par ${t.participant}</small>` : ''}
+                            </div>
+                            <span class="font-bold ${typeColor}">
+                                ${t.type === 'contribution' ? '+' : '-'}${t.montant.toFixed(2)}€
+                            </span>
+                        </div>
+                        <small class="text-gray-500">${t.date} à ${t.heure}</small>
                     </div>
-                    <span class="font-bold ${t.type === 'contribution' ? 'text-green-600' : 'text-red-600'}">
-                        ${t.type === 'contribution' ? '+' : '-'}${t.montant.toFixed(2)}€
-                    </span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // === FONCTIONS UTILES ===
-        function viderDonnees() {
-            if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ?')) {
-                localStorage.clear();
-                participants = [];
-                transactions = [];
-                mettreAJourInterface();
-                alert('Données supprimées !');
+        function afficherPreparations() {
+            const container = document.getElementById('preparationsJour');
+            if (!container) return;
+            
+            if (preparations.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Aucune préparation pour le moment.</p>';
+                return;
             }
+            
+            // Grouper par jour
+            const preparationsParJour = {};
+            preparations.forEach(prep => {
+                if (!preparationsParJour[prep.date]) {
+                    preparationsParJour[prep.date] = [];
+                }
+                preparationsParJour[prep.date].push(prep);
+            });
+            
+            const jours = Object.keys(preparationsParJour).sort().reverse().slice(0, 5);
+            
+            container.innerHTML = jours.map(jour => {
+                const prepsJour = preparationsParJour[jour];
+                return `
+                    <div class="mb-3">
+                        <h5 class="font-semibold text-gray-800">${jour} (${prepsJour.length} café${prepsJour.length > 1 ? 's' : ''})</h5>
+                        <div class="text-sm text-gray-600">
+                            ${prepsJour.slice(-3).map(p => `${p.heure} - ${p.preparateur}`).join(' • ')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function exporterDonnees() {
-            const donnees = {
-                participants,
-                transactions,
-                dateExport: new Date().toISOString()
-            };
+        function afficherStock() {
+            const cafeElement = document.getElementById('stockCafe');
+            const filtresElement = document.getElementById('stockFiltres');
             
-            const dataStr = JSON.stringify(donnees, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
+            if (cafeElement) cafeElement.textContent = stock.cafe || 0;
+            if (filtresElement) filtresElement.textContent = stock.filtres || 0;
+        }
+
+        function mettreAJourSelecteurPreparateur() {
+            const selecteur = document.getElementById('preparateurSelect');
+            if (!selecteur) return;
             
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `cagnotte_cafe_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            URL.revokeObjectURL(url);
-            alert('Données exportées !');
+            selecteur.innerHTML = '<option value="">Qui a préparé le café ?</option>' +
+                participants.map(p => `<option value="${p.nom}">${p.nom}</option>`).join('');
         }
 
         // === INITIALISATION ===
         document.addEventListener('DOMContentLoaded', function() {
             mettreAJourInterface();
-            console.log('Cagnotte du café chargée !');
+            console.log('☕ Cagnotte du café chargée !');
         });
     </script>
 </body>
