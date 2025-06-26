@@ -191,6 +191,8 @@
         
         const CURRENCY = '€';
         let localParticipants = []; // Cache local pour les participants
+        let coffeePrepCounts = {}; // Préparations par participant
+        let lowPrepThreshold = 0; // Seuil bas de préparations
 
         // --- Fonctions Utilitaires ---
         const formatCurrency = (amount) => `${Number(amount).toFixed(2)} ${CURRENCY}`;
@@ -213,12 +215,14 @@
             localParticipants.forEach(p => {
                 const balanceColor = p.balance >= 0 ? 'text-green-400' : 'text-red-400';
                 const initials = p.name.substring(0, 2).toUpperCase();
+                const prepCount = coffeePrepCounts[p.id] || 0;
+                const debtIcon = prepCount <= lowPrepThreshold ? ' \u{1F480}' : '';
                 participantsContainer.innerHTML += `
                     <div class="flex items-center justify-between bg-slate-700/50 p-4 rounded-xl hover:bg-slate-700 flex-wrap gap-2">
                         <div class="flex items-center">
                             <div class="w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white mr-4 flex-shrink-0">${initials}</div>
                             <div>
-                                <p class="font-semibold text-white">${p.name}</p>
+                                <p class="font-semibold text-white">${p.name}${debtIcon}</p>
                                 <p class="text-sm ${balanceColor} font-mono">${formatCurrency(p.balance)}</p>
                             </div>
                         </div>
@@ -284,6 +288,25 @@
                 });
             });
             feather.replace();
+        };
+
+        const updateCoffeePrepStats = (prepData) => {
+            coffeePrepCounts = {};
+            prepData.forEach(item => {
+                if (!coffeePrepCounts[item.participantId]) coffeePrepCounts[item.participantId] = 0;
+                coffeePrepCounts[item.participantId]++;
+            });
+            // Inclure les participants sans préparation
+            localParticipants.forEach(p => {
+                if (!coffeePrepCounts[p.id]) coffeePrepCounts[p.id] = 0;
+            });
+            const counts = Object.values(coffeePrepCounts).sort((a, b) => a - b);
+            if (counts.length > 0) {
+                const idx = Math.ceil(counts.length * 0.2) - 1;
+                lowPrepThreshold = counts[idx];
+            } else {
+                lowPrepThreshold = 0;
+            }
         };
 
         // --- Logique Firebase ---
@@ -437,7 +460,9 @@
                 const coffeeQuery = query(coffeePreparationsCollection, orderBy("createdAt", "desc"));
                 onSnapshot(coffeeQuery, (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
+                    updateCoffeePrepStats(data);
                     renderCoffeeHistory(data);
+                    renderParticipants();
                 });
 
                 coffeeDateInput.value = new Date().toISOString().slice(0,10);
