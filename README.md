@@ -14,22 +14,25 @@ Make sure you are logged in with `firebase login` and have access to a Firebase 
 
 ## Firebase configuration
 
-Create a `public/firebaseConfig.js` file containing your Firebase project keys and export the configuration:
+The app expects your Firebase credentials directly in `public/index.html` inside
+the `firebaseConfig` object. Replace the placeholder values with those from your
+Firebase console:
 
-```javascript
-// public/firebaseConfig.js
-export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
-};
+```html
+<!-- public/index.html -->
+<script type="module">
+  // ...
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID",
+    measurementId: "YOUR_MEASUREMENT_ID"
+  };
+</script>
 ```
-
-`public/index.html` imports this module to initialise Firebase.
 
 ## Local development
 
