@@ -1,611 +1,279 @@
 <!DOCTYPE html>
-<html lang="fr" class="dark">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cagnotte Café de l'Équipe (Connectée)</title>
-    
-    <!-- Tailwind CSS, Google Fonts, Feather Icons -->
+    <title>La Cagnotte du Café ☕</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/feather-icons"></script>
-
-    <style>
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        .transition-all-smooth { transition: all 0.3s ease-in-out; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        
-        /* Style pour l'état de chargement */
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(15, 23, 42, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-            transition: opacity 0.3s ease;
-        }
-    </style>
 </head>
-<body class="bg-slate-900 text-slate-300 flex items-center justify-center min-h-screen p-4">
+<body class="bg-amber-50 font-sans">
+    <div class="container mx-auto p-6 max-w-4xl">
+        <h1 class="text-4xl font-bold text-center text-amber-800 mb-8">☕ Cagnotte du Café</h1>
+        
+        <!-- Solde -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 text-center">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-2">Solde Actuel</h2>
+            <div id="solde" class="text-4xl font-bold text-green-600">0.00 €</div>
+        </div>
 
-    <!-- Écran de chargement en attendant la connexion à Firebase -->
-    <div id="loading-overlay">
-        <div class="text-center">
-            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-white mt-3">Connexion à la base de données...</p>
+        <div class="grid md:grid-cols-2 gap-6">
+            
+            <!-- Ajouter Participant -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">👤 Ajouter un Participant</h3>
+                <div class="space-y-4">
+                    <input type="text" id="nomParticipant" placeholder="Nom du participant" 
+                           class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input type="number" id="contribution" placeholder="Contribution (€)" step="0.01" 
+                           class="w-full p-3 border border-gray-300 rounded-lg">
+                    <button onclick="ajouterParticipant()" 
+                            class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600">
+                        Ajouter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Enregistrer Dépense -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">💰 Enregistrer une Dépense</h3>
+                <div class="space-y-4">
+                    <input type="text" id="descriptionDepense" placeholder="Description (ex: Café, Lait...)" 
+                           class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input type="number" id="montantDepense" placeholder="Montant (€)" step="0.01" 
+                           class="w-full p-3 border border-gray-300 rounded-lg">
+                    <button onclick="ajouterDepense()" 
+                            class="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600">
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">👥 Participants</h3>
+            <div id="listeParticipants">
+                <p class="text-gray-500">Aucun participant pour le moment.</p>
+            </div>
+        </div>
+
+        <!-- Historique -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">📜 Historique des Transactions</h3>
+            <div id="listeTransactions">
+                <p class="text-gray-500">Aucune transaction pour le moment.</p>
+            </div>
+        </div>
+
+        <!-- Boutons utiles -->
+        <div class="flex gap-4 mt-6">
+            <button onclick="exporterDonnees()" 
+                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600">
+                📥 Exporter
+            </button>
+            <button onclick="viderDonnees()" 
+                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600">
+                🗑️ Reset
+            </button>
         </div>
     </div>
 
-    <div class="w-full max-w-4xl mx-auto">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-bold text-white">La Cagnotte du Café ☕</h1>
-            <p class="text-slate-400 mt-2">Pour que la machine à café ne soit jamais à sec.</p>
-        </header>
+    <script>
+        // === STOCKAGE SIMPLE ===
+        function sauvegarder(cle, donnees) {
+            localStorage.setItem(cle, JSON.stringify(donnees));
+        }
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-8">
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-                    <h2 class="text-lg font-semibold text-white mb-4">Solde Actuel de la Cagnotte</h2>
-                    <div id="total-balance" class="text-5xl font-bold text-emerald-400">0.00 €</div>
-                </div>
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-                    <h2 class="text-lg font-semibold text-white mb-4">Participants</h2>
-                    <div id="participants-container" class="space-y-4"></div>
-                </div>
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-                    <h2 class="text-lg font-semibold text-white mb-4">Ajouter un Participant</h2>
-                    <form id="add-participant-form" class="space-y-4">
-                        <div>
-                            <label for="participant-name" class="block text-sm font-medium text-slate-400 mb-1">Nom</label>
-                            <input type="text" id="participant-name" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
-                        </div>
-                        <div>
-                            <label for="participant-balance" class="block text-sm font-medium text-slate-400 mb-1">Solde initial (€) (optionnel)</label>
-                            <input type="number" id="participant-balance" step="0.01" min="0" placeholder="0" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth">
-                        </div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-all-smooth flex items-center justify-center">
-                            <i data-feather="user-plus" class="mr-2 h-5 w-5"></i>Ajouter le Participant
-                        </button>
-                    </form>
-                </div>
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-                    <h2 class="text-lg font-semibold text-white mb-4">Enregistrer une Dépense</h2>
-                    <form id="expense-form" class="space-y-4">
-                        <div>
-                            <label for="expense-description" class="block text-sm font-medium text-slate-400 mb-1">Description</label>
-                            <input type="text" id="expense-description" placeholder="Achat de café en grains, filtres..." class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
-                        </div>
-                        <div>
-                            <label for="expense-amount" class="block text-sm font-medium text-slate-400 mb-1">Montant (€)</label>
-                            <input type="number" id="expense-amount" step="0.01" min="0" placeholder="15.50" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
-                        </div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all-smooth flex items-center justify-center">
-                            <i data-feather="arrow-down-circle" class="mr-2 h-5 w-5"></i>Ajouter la Dépense
-                        </button>
-                    </form>
-                </div>
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-                    <h2 class="text-lg font-semibold text-white mb-4">Journal des Cafés Préparés</h2>
-                    <form id="coffee-form" class="space-y-4">
-                        <div>
-                            <label for="coffee-participant" class="block text-sm font-medium text-slate-400 mb-1">Préparé par</label>
-                            <select id="coffee-participant" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth"></select>
-                        </div>
-                        <div>
-                            <label for="coffee-date" class="block text-sm font-medium text-slate-400 mb-1">Date</label>
-                            <input type="date" id="coffee-date" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-all-smooth flex items-center justify-center">
-                            <i data-feather="coffee" class="mr-2 h-5 w-5"></i>Ajouter la Préparation
-                        </button>
-                    </form>
-                    <div id="coffee-history" class="mt-6 space-y-2"></div>
-                </div>
-                <div id="supplies-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
-                    <h2 class="text-lg font-semibold text-white mb-4">Stock de Fournitures</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-white">Sacs de café</span>
-                            <div class="flex items-center">
-                                <button data-action="dec" data-field="coffee_bags" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-lg mr-2">-</button>
-                                <span id="coffee-bags-count" class="font-mono">0</span>
-                                <button data-action="inc" data-field="coffee_bags" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-lg ml-2">+</button>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-white">Boîtes de filtres</span>
-                            <div class="flex items-center">
-                                <button data-action="dec" data-field="filter_boxes" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-lg mr-2">-</button>
-                                <span id="filter-boxes-count" class="font-mono">0</span>
-                                <button data-action="inc" data-field="filter_boxes" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-lg ml-2">+</button>
-                            </div>
-                        </div>
+        function charger(cle) {
+            const data = localStorage.getItem(cle);
+            return data ? JSON.parse(data) : [];
+        }
+
+        // === DONNÉES ===
+        let participants = charger('participants');
+        let transactions = charger('transactions');
+
+        // === FONCTIONS PRINCIPALES ===
+        function ajouterParticipant() {
+            const nom = document.getElementById('nomParticipant').value.trim();
+            const contribution = parseFloat(document.getElementById('contribution').value) || 0;
+            
+            if (nom === '') {
+                alert('Veuillez entrer un nom');
+                return;
+            }
+            
+            if (contribution <= 0) {
+                alert('La contribution doit être positive');
+                return;
+            }
+            
+            const participant = {
+                id: Date.now(),
+                nom: nom,
+                contribution: contribution,
+                date: new Date().toLocaleDateString('fr-FR')
+            };
+            
+            participants.push(participant);
+            sauvegarder('participants', participants);
+            
+            // Ajouter comme transaction
+            ajouterTransaction(`Contribution de ${nom}`, contribution, 'contribution');
+            
+            // Vider le formulaire
+            document.getElementById('nomParticipant').value = '';
+            document.getElementById('contribution').value = '';
+            
+            mettreAJourInterface();
+            
+            alert(`${nom} ajouté avec succès !`);
+        }
+
+        function ajouterDepense() {
+            const description = document.getElementById('descriptionDepense').value.trim();
+            const montant = parseFloat(document.getElementById('montantDepense').value) || 0;
+            
+            if (description === '') {
+                alert('Veuillez entrer une description');
+                return;
+            }
+            
+            if (montant <= 0) {
+                alert('Le montant doit être positif');
+                return;
+            }
+            
+            ajouterTransaction(description, montant, 'depense');
+            
+            // Vider le formulaire
+            document.getElementById('descriptionDepense').value = '';
+            document.getElementById('montantDepense').value = '';
+            
+            mettreAJourInterface();
+            
+            alert('Dépense enregistrée !');
+        }
+
+        function ajouterTransaction(description, montant, type) {
+            const transaction = {
+                id: Date.now(),
+                description: description,
+                montant: montant,
+                type: type, // 'contribution' ou 'depense'
+                date: new Date().toLocaleDateString('fr-FR'),
+                heure: new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})
+            };
+            
+            transactions.push(transaction);
+            sauvegarder('transactions', transactions);
+        }
+
+        // === AFFICHAGE ===
+        function calculerSolde() {
+            return transactions.reduce((total, transaction) => {
+                return transaction.type === 'contribution' 
+                    ? total + transaction.montant 
+                    : total - transaction.montant;
+            }, 0);
+        }
+
+        function mettreAJourInterface() {
+            // Solde
+            const solde = calculerSolde();
+            const soldeElement = document.getElementById('solde');
+            if (soldeElement) {
+                soldeElement.textContent = `${solde.toFixed(2)} €`;
+                soldeElement.style.color = solde >= 0 ? '#22c55e' : '#ef4444';
+            }
+            
+            // Participants
+            afficherParticipants();
+            
+            // Transactions
+            afficherTransactions();
+        }
+
+        function afficherParticipants() {
+            const container = document.getElementById('listeParticipants');
+            if (!container) return;
+            
+            if (participants.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Aucun participant pour le moment.</p>';
+                return;
+            }
+            
+            container.innerHTML = participants.map(p => `
+                <div class="flex justify-between items-center p-3 border-b border-gray-200">
+                    <div>
+                        <strong class="text-gray-800">${p.nom}</strong>
+                        <small class="text-gray-500 ml-2">(${p.date})</small>
                     </div>
+                    <span class="font-bold text-green-600">+${p.contribution.toFixed(2)}€</span>
                 </div>
-            </div>
-            <div class="lg:col-span-1">
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 h-full flex flex-col">
-                    <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Historique des Transactions</h2>
-                    <div id="history-container" class="flex-grow space-y-3 overflow-y-auto pr-2 -mr-2">
-                        <p class="text-slate-500 text-center py-4">Aucune transaction pour le moment.</p>
+            `).join('');
+        }
+
+        function afficherTransactions() {
+            const container = document.getElementById('listeTransactions');
+            if (!container) return;
+            
+            if (transactions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Aucune transaction pour le moment.</p>';
+                return;
+            }
+            
+            const transactionsRecentes = transactions.slice(-10).reverse();
+            
+            container.innerHTML = transactionsRecentes.map(t => `
+                <div class="flex justify-between items-center p-3 border-b border-gray-200">
+                    <div>
+                        <strong class="text-gray-800">${t.description}</strong>
+                        <small class="text-gray-500 block">${t.date} à ${t.heure}</small>
                     </div>
+                    <span class="font-bold ${t.type === 'contribution' ? 'text-green-600' : 'text-red-600'}">
+                        ${t.type === 'contribution' ? '+' : '-'}${t.montant.toFixed(2)}€
+                    </span>
                 </div>
-                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 mt-8 h-full flex flex-col">
-                    <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Préparations par Jour</h2>
-                    <div id="coffee-history-container" class="flex-grow space-y-3 overflow-y-auto pr-2 -mr-2">
-                        <p class="text-slate-500 text-center py-4">Aucune préparation pour le moment.</p>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-    
-    <div id="notification-modal" class="fixed top-5 right-5 bg-emerald-500 text-white py-2 px-5 rounded-lg shadow-xl translate-x-[150%] transition-transform duration-500 ease-in-out">
-        <p id="notification-message"></p>
-    </div>
+            `).join('');
+        }
 
-    <!-- ===== Import des librairies Firebase ===== -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, getDoc, setDoc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { firebaseConfig } from "./firebaseConfig.js";
-
-        // --- Configuration Firebase ---
-        // Les valeurs du projet sont définies dans firebaseConfig.js
-
-
-        // --- Initialisation de Firebase & Services ---
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // --- Références aux collections Firestore ---
-        const participantsCollection = collection(db, 'participants');
-        const historyCollection = collection(db, 'history');
-        const coffeePreparationsCollection = collection(db, 'coffee_preparations');
-        const suppliesDoc = doc(db, 'supplies', 'stock');
-        
-        // --- ÉLÉMENTS DU DOM ---
-        const participantsContainer = document.getElementById('participants-container');
-        const totalBalanceEl = document.getElementById('total-balance');
-        const historyContainer = document.getElementById('history-container');
-        const expenseForm = document.getElementById('expense-form');
-        const expenseDescriptionInput = document.getElementById('expense-description');
-        const expenseAmountInput = document.getElementById('expense-amount');
-        const addParticipantForm = document.getElementById('add-participant-form');
-        const participantNameInput = document.getElementById('participant-name');
-        const participantBalanceInput = document.getElementById('participant-balance');
-        const coffeeForm = document.getElementById('coffee-form');
-        const coffeeParticipantSelect = document.getElementById('coffee-participant');
-        const coffeeDateInput = document.getElementById('coffee-date');
-        const coffeeHistory = document.getElementById('coffee-history');
-        const coffeeHistoryContainer = document.getElementById('coffee-history-container');
-        const notificationModal = document.getElementById('notification-modal');
-        const notificationMessage = document.getElementById('notification-message');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const suppliesSection = document.getElementById('supplies-section');
-        const coffeeBagsCountEl = document.getElementById('coffee-bags-count');
-        const filterBoxesCountEl = document.getElementById('filter-boxes-count');
-        
-        const CURRENCY = '€';
-        let localParticipants = []; // Cache local pour les participants
-        let coffeePrepCounts = {}; // Préparations par participant
-        let lowPrepThreshold = 0; // Seuil bas de préparations
-        let supplies = { coffee_bags: 0, filter_boxes: 0 };
-
-        // --- Fonctions Utilitaires ---
-        const formatCurrency = (amount) => `${Number(amount).toFixed(2)} ${CURRENCY}`;
-        const containsHTML = (str) => /[<>]/.test(str);
-        const showNotification = (message, type = 'success') => {
-            notificationMessage.textContent = message;
-            notificationModal.className = `fixed top-5 right-5 text-white py-2 px-5 rounded-lg shadow-xl transition-transform duration-500 ease-in-out translate-x-0 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
-            setTimeout(() => { notificationModal.classList.add('translate-x-[150%]'); }, 3000);
-        };
-        
-        // --- Fonctions de Rendu (UI) ---
-        const renderTotalBalance = () => {
-            const total = localParticipants.reduce((sum, p) => sum + p.balance, 0);
-            totalBalanceEl.textContent = formatCurrency(total);
-        };
-
-        const renderParticipants = () => {
-            participantsContainer.innerHTML = '';
-            localParticipants.sort((a, b) => a.name.localeCompare(b.name));
-            localParticipants.forEach(p => {
-                const balanceColor = p.balance >= 0 ? 'text-green-400' : 'text-red-400';
-                const initials = p.name.substring(0, 2).toUpperCase();
-                const prepCount = coffeePrepCounts[p.id] || 0;
-                const debtIcon = prepCount <= lowPrepThreshold ? ' \u{1F480}' : '';
-
-                const wrapper = document.createElement('div');
-                wrapper.className = 'flex items-center justify-between bg-slate-700/50 p-4 rounded-xl hover:bg-slate-700 flex-wrap gap-2';
-
-                const left = document.createElement('div');
-                left.className = 'flex items-center';
-
-                const avatar = document.createElement('div');
-                avatar.className = 'w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white mr-4 flex-shrink-0';
-                avatar.textContent = initials;
-
-                const info = document.createElement('div');
-                const nameP = document.createElement('p');
-                nameP.className = 'font-semibold text-white';
-                nameP.textContent = p.name + debtIcon;
-
-                const balP = document.createElement('p');
-                balP.className = `text-sm ${balanceColor} font-mono`;
-                balP.textContent = formatCurrency(p.balance);
-
-                info.appendChild(nameP);
-                info.appendChild(balP);
-
-                left.appendChild(avatar);
-                left.appendChild(info);
-
-                const right = document.createElement('div');
-                right.className = 'flex items-center gap-2';
-
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.dataset.id = p.id;
-                input.className = 'contribution-input w-24 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2';
-                input.min = '1';
-                input.step = '0.01';
-                input.placeholder = '5.00';
-
-                const button = document.createElement('button');
-                button.dataset.id = p.id;
-                button.className = 'add-contribution-btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg flex items-center';
-                const icon = document.createElement('i');
-                icon.setAttribute('data-feather', 'plus');
-                icon.className = 'h-5 w-5';
-                button.appendChild(icon);
-
-                right.appendChild(input);
-                right.appendChild(button);
-
-                wrapper.appendChild(left);
-                wrapper.appendChild(right);
-
-                participantsContainer.appendChild(wrapper);
-            });
-            feather.replace();
-        };
-
-        const renderCoffeeParticipantsOptions = () => {
-            coffeeParticipantSelect.innerHTML = '';
-            localParticipants.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p.id;
-                option.textContent = p.name;
-                coffeeParticipantSelect.appendChild(option);
-            });
-        };
-
-        const renderHistory = (historyData) => {
-            if (historyData.length === 0) {
-                historyContainer.innerHTML = '<p class="text-slate-500 text-center py-4">Aucune transaction.</p>';
-                return;
-            }
-            historyContainer.innerHTML = '';
-            historyData.forEach(item => {
-                const isExpense = item.type === 'expense';
-                const icon = isExpense ? 'arrow-down' : 'arrow-up';
-                const color = isExpense ? 'text-red-400' : 'text-green-400';
-                const sign = isExpense ? '-' : '+';
-
-                const wrapper = document.createElement('div');
-                wrapper.className = 'flex items-start';
-
-                const iconWrap = document.createElement('div');
-                iconWrap.className = 'w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center mr-3 flex-shrink-0';
-                const iconEl = document.createElement('i');
-                iconEl.setAttribute('data-feather', icon);
-                iconEl.className = `${color} h-5 w-5`;
-                iconWrap.appendChild(iconEl);
-
-                const textWrap = document.createElement('div');
-                const textP = document.createElement('p');
-                textP.className = 'text-white text-sm';
-                textP.textContent = item.text;
-                const amountP = document.createElement('p');
-                amountP.className = `text-xs font-mono ${color}`;
-                amountP.textContent = `${sign}${item.amount}`;
-                textWrap.appendChild(textP);
-                textWrap.appendChild(amountP);
-
-                wrapper.appendChild(iconWrap);
-                wrapper.appendChild(textWrap);
-
-                historyContainer.appendChild(wrapper);
-            });
-            feather.replace();
-        };
-
-        const renderCoffeeHistory = (prepData) => {
-            if (prepData.length === 0) {
-                coffeeHistoryContainer.innerHTML = '<p class="text-slate-500 text-center py-4">Aucune préparation pour le moment.</p>';
-                return;
-            }
-            const counts = {};
-            prepData.forEach(item => {
-                const dateKey = item.date.toDate().toISOString().slice(0,10);
-                if (!counts[dateKey]) counts[dateKey] = {};
-                if (!counts[dateKey][item.participantId]) counts[dateKey][item.participantId] = 0;
-                counts[dateKey][item.participantId]++;
-            });
-            const sortedDates = Object.keys(counts).sort().reverse();
-            coffeeHistoryContainer.innerHTML = '';
-            sortedDates.forEach(d => {
-                const h3 = document.createElement('h3');
-                h3.className = 'text-white font-semibold mt-2';
-                h3.textContent = d;
-                coffeeHistoryContainer.appendChild(h3);
-                Object.keys(counts[d]).forEach(pid => {
-                    const p = localParticipants.find(x => x.id === pid);
-                    const name = p ? p.name : 'Inconnu';
-                    const pEl = document.createElement('p');
-                    pEl.className = 'ml-4 text-slate-300';
-                    pEl.textContent = `${name}: ${counts[d][pid]}`;
-                    coffeeHistoryContainer.appendChild(pEl);
-                });
-            });
-            feather.replace();
-        };
-
-        const renderSupplies = () => {
-            coffeeBagsCountEl.textContent = supplies.coffee_bags;
-            filterBoxesCountEl.textContent = supplies.filter_boxes;
-        };
-
-        const updateCoffeePrepStats = (prepData) => {
-            coffeePrepCounts = {};
-            prepData.forEach(item => {
-                if (!coffeePrepCounts[item.participantId]) coffeePrepCounts[item.participantId] = 0;
-                coffeePrepCounts[item.participantId]++;
-            });
-            // Inclure les participants sans préparation
-            localParticipants.forEach(p => {
-                if (!coffeePrepCounts[p.id]) coffeePrepCounts[p.id] = 0;
-            });
-            const counts = Object.values(coffeePrepCounts).sort((a, b) => a - b);
-            if (counts.length > 0) {
-                const idx = Math.ceil(counts.length * 0.2) - 1;
-                lowPrepThreshold = counts[idx];
-            } else {
-                lowPrepThreshold = 0;
-            }
-        };
-
-        // --- Logique Firebase ---
-
-        const handleAddParticipant = async (e) => {
-            e.preventDefault();
-            const name = participantNameInput.value.trim();
-            let balance = parseFloat(participantBalanceInput.value);
-            if (!name || containsHTML(name)) {
-                showNotification('Le nom est invalide.', 'error');
-                return;
-            }
-            if (participantBalanceInput.value.trim() === '' || isNaN(balance)) {
-                balance = 0;
-            }
-            if (balance < 0) {
-                showNotification('Le solde initial ne peut être négatif.', 'error');
-                return;
-            }
-            try {
-                await addDoc(participantsCollection, { name, balance });
-                showNotification('Participant ajouté !');
-                addParticipantForm.reset();
-            } catch (err) {
-                console.error('Erreur lors de l\'ajout du participant:', err);
-                showNotification("Impossible d'ajouter le participant.", 'error');
-            }
-        };
-        
-        const handleAddContribution = async (participantId, amount) => {
-            const participant = localParticipants.find(p => p.id === participantId);
-            if (participant) {
-                try {
-                    const participantRef = doc(db, "participants", participantId);
-                    await updateDoc(participantRef, { balance: participant.balance + amount });
-                    await addDoc(historyCollection, {
-                        type: 'contribution',
-                        text: `${participant.name} a contribué.`,
-                        amount: formatCurrency(amount),
-                        createdAt: serverTimestamp()
-                    });
-                    showNotification(`${participant.name} a ajouté ${formatCurrency(amount)} !`, 'success');
-                } catch (err) {
-                    console.error("Erreur lors de l'ajout de la contribution:", err);
-                    showNotification("Impossible d'ajouter la contribution.", 'error');
-                }
-            }
-        };
-        
-        const handleAddExpense = async (e) => {
-            e.preventDefault();
-            const submitBtn = expenseForm.querySelector('button[type="submit"]');
-            if (submitBtn) submitBtn.disabled = true;
-            const description = expenseDescriptionInput.value.trim();
-            const amount = parseFloat(expenseAmountInput.value);
-            if (!description || containsHTML(description) || isNaN(amount) || amount <= 0) {
-                showNotification("Description ou montant invalide.", 'error');
-                if (submitBtn) submitBtn.disabled = false;
-                return;
-            }
-            if (localParticipants.length === 0) {
-                if (submitBtn) submitBtn.disabled = false;
-                return;
-            }
-
-            const costPerMember = amount / localParticipants.length;
-
-            try {
-                for (const p of localParticipants) {
-                    const participantRef = doc(db, "participants", p.id);
-                    await updateDoc(participantRef, { balance: p.balance - costPerMember });
-                }
-
-                await addDoc(historyCollection, {
-                    type: 'expense',
-                    text: `Dépense : ${description}`,
-                    amount: formatCurrency(amount),
-                    createdAt: serverTimestamp()
-                });
-
-                showNotification(`Dépense de ${formatCurrency(amount)} enregistrée.`, 'success');
-                expenseForm.reset();
-            } catch (err) {
-                console.error("Erreur lors de l'enregistrement de la dépense:", err);
-                showNotification("Impossible d'enregistrer la dépense.", 'error');
-            } finally {
-                if (submitBtn) submitBtn.disabled = false;
-            }
-        };
-
-        const handleAddCoffeePreparation = async (e) => {
-            e.preventDefault();
-            const participantId = coffeeParticipantSelect.value;
-            const dateValue = coffeeDateInput.value;
-            if (!participantId || !dateValue) {
-                showNotification('Sélectionnez un participant et une date.', 'error');
-                return;
-            }
-            try {
-                await addDoc(coffeePreparationsCollection, {
-                    participantId,
-                    date: Timestamp.fromDate(new Date(dateValue)),
-                    createdAt: serverTimestamp()
-                });
-                showNotification('Préparation enregistrée !');
-                coffeeForm.reset();
-                coffeeDateInput.value = new Date().toISOString().slice(0,10);
-            } catch (err) {
-                console.error('Erreur lors de l\'ajout de la préparation:', err);
-                showNotification("Impossible d'enregistrer.", 'error');
-            }
-        };
-
-        const initializeParticipantsIfNeeded = async () => {
-            const snapshot = await getDocs(participantsCollection);
-            if (snapshot.empty) {
-                console.log("Base de données vide, initialisation des participants...");
-                const initialParticipants = ['Soso', 'Gégé', 'Aurel', 'Alex', 'Oliv'];
-                for (const name of initialParticipants) {
-                    await addDoc(participantsCollection, { name: name, balance: 0 });
-                }
-            }
-        };
-
-        const initializeSuppliesIfNeeded = async () => {
-            const snap = await getDoc(suppliesDoc);
-            if (!snap.exists()) {
-                await setDoc(suppliesDoc, { coffee_bags: 0, filter_boxes: 0 });
-            }
-        };
-
-        // --- Écouteurs d'événements ---
-        participantsContainer.addEventListener('click', async (e) => {
-            const button = e.target.closest('.add-contribution-btn');
-            if (button) {
-                const participantId = button.dataset.id;
-                const input = document.querySelector(`.contribution-input[data-id='${participantId}']`);
-                const amount = parseFloat(input.value);
-                if (isNaN(amount) || amount < 1) {
-                     showNotification("Veuillez entrer un montant d'au moins 1€.", 'error');
-                     return;
-                }
-                button.disabled = true;
-                input.disabled = true;
-                await handleAddContribution(participantId, amount);
-                input.value = '';
-                button.disabled = false;
-                input.disabled = false;
-            }
-        });
-        expenseForm.addEventListener('submit', handleAddExpense);
-        addParticipantForm.addEventListener('submit', handleAddParticipant);
-        coffeeForm.addEventListener('submit', handleAddCoffeePreparation);
-        suppliesSection.addEventListener('click', async (e) => {
-            const btn = e.target.closest('button[data-field]');
-            if (!btn) return;
-            const field = btn.dataset.field;
-            const action = btn.dataset.action;
-            let value = supplies[field] || 0;
-            if (action === 'inc') value++;
-            if (action === 'dec') value = Math.max(0, value - 1);
-            await updateDoc(suppliesDoc, { [field]: value });
-        });
-
-        // --- Démarrage de l'application ---
-        async function main() {
-            try {
-                await signInAnonymously(auth);
-                await initializeParticipantsIfNeeded();
-                await initializeSuppliesIfNeeded();
-
-                const participantsQuery = query(participantsCollection);
-                onSnapshot(participantsQuery, (snapshot) => {
-                    localParticipants = [];
-                    snapshot.forEach(doc => {
-                        localParticipants.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderParticipants();
-                    renderTotalBalance();
-                    renderCoffeeParticipantsOptions();
-                    loadingOverlay.style.opacity = '0';
-                    setTimeout(() => loadingOverlay.style.display = 'none', 300);
-                });
-
-                const historyQuery = query(historyCollection, orderBy("createdAt", "desc"));
-                onSnapshot(historyQuery, (snapshot) => {
-                    const historyData = snapshot.docs.map(doc => doc.data());
-                    renderHistory(historyData);
-                });
-
-                const coffeeQuery = query(coffeePreparationsCollection, orderBy("createdAt", "desc"));
-                onSnapshot(coffeeQuery, (snapshot) => {
-                    const data = snapshot.docs.map(doc => doc.data());
-                    updateCoffeePrepStats(data);
-                    renderCoffeeHistory(data);
-                    renderParticipants();
-                });
-
-                onSnapshot(suppliesDoc, (docSnap) => {
-                    supplies = docSnap.data();
-                    renderSupplies();
-                });
-
-                coffeeDateInput.value = new Date().toISOString().slice(0,10);
-            } catch (error) {
-                console.error("Erreur de connexion à Firebase:", error);
-                loadingOverlay.innerHTML = `<p class="text-red-400 text-center max-w-sm p-4"><b>Erreur: Impossible de se connecter à Firebase.</b><br>La configuration semble incorrecte. Veuillez vérifier que la clé API est valide et qu'il n'y a pas de restrictions dans votre console Google Cloud.</p>`;
+        // === FONCTIONS UTILES ===
+        function viderDonnees() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ?')) {
+                localStorage.clear();
+                participants = [];
+                transactions = [];
+                mettreAJourInterface();
+                alert('Données supprimées !');
             }
         }
-        
-        main(); // Lancer l'application
+
+        function exporterDonnees() {
+            const donnees = {
+                participants,
+                transactions,
+                dateExport: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(donnees, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `cagnotte_cafe_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            alert('Données exportées !');
+        }
+
+        // === INITIALISATION ===
+        document.addEventListener('DOMContentLoaded', function() {
+            mettreAJourInterface();
+            console.log('Cagnotte du café chargée !');
+        });
     </script>
 </body>
 </html>
-
