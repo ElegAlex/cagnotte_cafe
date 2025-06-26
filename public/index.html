@@ -118,6 +118,27 @@
                     </form>
                     <div id="coffee-history" class="mt-6 space-y-2"></div>
                 </div>
+                <div id="supplies-section" class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                    <h2 class="text-lg font-semibold text-white mb-4">Stock de Fournitures</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-white">Sacs de café</span>
+                            <div class="flex items-center">
+                                <button data-action="dec" data-field="coffee_bags" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-lg mr-2">-</button>
+                                <span id="coffee-bags-count" class="font-mono">0</span>
+                                <button data-action="inc" data-field="coffee_bags" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-lg ml-2">+</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-white">Boîtes de filtres</span>
+                            <div class="flex items-center">
+                                <button data-action="dec" data-field="filter_boxes" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-lg mr-2">-</button>
+                                <span id="filter-boxes-count" class="font-mono">0</span>
+                                <button data-action="inc" data-field="filter_boxes" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-lg ml-2">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="lg:col-span-1">
                 <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 h-full flex flex-col">
@@ -144,7 +165,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- Configuration Firebase ---
@@ -169,6 +190,7 @@
         const participantsCollection = collection(db, 'participants');
         const historyCollection = collection(db, 'history');
         const coffeePreparationsCollection = collection(db, 'coffee_preparations');
+        const suppliesDoc = doc(db, 'supplies', 'stock');
         
         // --- ÉLÉMENTS DU DOM ---
         const participantsContainer = document.getElementById('participants-container');
@@ -188,11 +210,15 @@
         const notificationModal = document.getElementById('notification-modal');
         const notificationMessage = document.getElementById('notification-message');
         const loadingOverlay = document.getElementById('loading-overlay');
+        const suppliesSection = document.getElementById('supplies-section');
+        const coffeeBagsCountEl = document.getElementById('coffee-bags-count');
+        const filterBoxesCountEl = document.getElementById('filter-boxes-count');
         
         const CURRENCY = '€';
         let localParticipants = []; // Cache local pour les participants
         let coffeePrepCounts = {}; // Préparations par participant
         let lowPrepThreshold = 0; // Seuil bas de préparations
+        let supplies = { coffee_bags: 0, filter_boxes: 0 };
 
         // --- Fonctions Utilitaires ---
         const formatCurrency = (amount) => `${Number(amount).toFixed(2)} ${CURRENCY}`;
@@ -288,6 +314,11 @@
                 });
             });
             feather.replace();
+        };
+
+        const renderSupplies = () => {
+            coffeeBagsCountEl.textContent = supplies.coffee_bags;
+            filterBoxesCountEl.textContent = supplies.filter_boxes;
         };
 
         const updateCoffeePrepStats = (prepData) => {
@@ -413,6 +444,13 @@
             }
         };
 
+        const initializeSuppliesIfNeeded = async () => {
+            const snap = await getDoc(suppliesDoc);
+            if (!snap.exists()) {
+                await setDoc(suppliesDoc, { coffee_bags: 0, filter_boxes: 0 });
+            }
+        };
+
         // --- Écouteurs d'événements ---
         participantsContainer.addEventListener('click', (e) => {
             const button = e.target.closest('.add-contribution-btn');
@@ -431,12 +469,23 @@
         expenseForm.addEventListener('submit', handleAddExpense);
         addParticipantForm.addEventListener('submit', handleAddParticipant);
         coffeeForm.addEventListener('submit', handleAddCoffeePreparation);
+        suppliesSection.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button[data-field]');
+            if (!btn) return;
+            const field = btn.dataset.field;
+            const action = btn.dataset.action;
+            let value = supplies[field] || 0;
+            if (action === 'inc') value++;
+            if (action === 'dec') value = Math.max(0, value - 1);
+            await updateDoc(suppliesDoc, { [field]: value });
+        });
 
         // --- Démarrage de l'application ---
         async function main() {
             try {
                 await signInAnonymously(auth);
                 await initializeParticipantsIfNeeded();
+                await initializeSuppliesIfNeeded();
 
                 const participantsQuery = query(participantsCollection);
                 onSnapshot(participantsQuery, (snapshot) => {
@@ -463,6 +512,11 @@
                     updateCoffeePrepStats(data);
                     renderCoffeeHistory(data);
                     renderParticipants();
+                });
+
+                onSnapshot(suppliesDoc, (docSnap) => {
+                    supplies = docSnap.data();
+                    renderSupplies();
                 });
 
                 coffeeDateInput.value = new Date().toISOString().slice(0,10);
