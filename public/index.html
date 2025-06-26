@@ -101,12 +101,35 @@
                         </button>
                     </form>
                 </div>
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                    <h2 class="text-lg font-semibold text-white mb-4">Journal des Cafés Préparés</h2>
+                    <form id="coffee-form" class="space-y-4">
+                        <div>
+                            <label for="coffee-participant" class="block text-sm font-medium text-slate-400 mb-1">Préparé par</label>
+                            <select id="coffee-participant" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth"></select>
+                        </div>
+                        <div>
+                            <label for="coffee-date" class="block text-sm font-medium text-slate-400 mb-1">Date</label>
+                            <input type="date" id="coffee-date" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-all-smooth flex items-center justify-center">
+                            <i data-feather="coffee" class="mr-2 h-5 w-5"></i>Ajouter la Préparation
+                        </button>
+                    </form>
+                    <div id="coffee-history" class="mt-6 space-y-2"></div>
+                </div>
             </div>
             <div class="lg:col-span-1">
                 <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 h-full flex flex-col">
                     <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Historique des Transactions</h2>
                     <div id="history-container" class="flex-grow space-y-3 overflow-y-auto pr-2 -mr-2">
                         <p class="text-slate-500 text-center py-4">Aucune transaction pour le moment.</p>
+                    </div>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 mt-8 h-full flex flex-col">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Préparations par Jour</h2>
+                    <div id="coffee-history-container" class="flex-grow space-y-3 overflow-y-auto pr-2 -mr-2">
+                        <p class="text-slate-500 text-center py-4">Aucune préparation pour le moment.</p>
                     </div>
                 </div>
             </div>
@@ -121,7 +144,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- Configuration Firebase ---
@@ -145,6 +168,7 @@
         // --- Références aux collections Firestore ---
         const participantsCollection = collection(db, 'participants');
         const historyCollection = collection(db, 'history');
+        const coffeePreparationsCollection = collection(db, 'coffee_preparations');
         
         // --- ÉLÉMENTS DU DOM ---
         const participantsContainer = document.getElementById('participants-container');
@@ -156,6 +180,11 @@
         const addParticipantForm = document.getElementById('add-participant-form');
         const participantNameInput = document.getElementById('participant-name');
         const participantBalanceInput = document.getElementById('participant-balance');
+        const coffeeForm = document.getElementById('coffee-form');
+        const coffeeParticipantSelect = document.getElementById('coffee-participant');
+        const coffeeDateInput = document.getElementById('coffee-date');
+        const coffeeHistory = document.getElementById('coffee-history');
+        const coffeeHistoryContainer = document.getElementById('coffee-history-container');
         const notificationModal = document.getElementById('notification-modal');
         const notificationMessage = document.getElementById('notification-message');
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -202,6 +231,13 @@
             feather.replace();
         };
 
+        const renderCoffeeParticipantsOptions = () => {
+            coffeeParticipantSelect.innerHTML = '';
+            localParticipants.forEach(p => {
+                coffeeParticipantSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+            });
+        };
+
         const renderHistory = (historyData) => {
             if (historyData.length === 0) {
                 historyContainer.innerHTML = '<p class="text-slate-500 text-center py-4">Aucune transaction.</p>';
@@ -221,6 +257,31 @@
                             <p class="text-xs font-mono ${color}">${sign}${item.amount}</p>
                         </div>
                     </div>`;
+            });
+            feather.replace();
+        };
+
+        const renderCoffeeHistory = (prepData) => {
+            if (prepData.length === 0) {
+                coffeeHistoryContainer.innerHTML = '<p class="text-slate-500 text-center py-4">Aucune préparation pour le moment.</p>';
+                return;
+            }
+            const counts = {};
+            prepData.forEach(item => {
+                const dateKey = item.date.toDate().toISOString().slice(0,10);
+                if (!counts[dateKey]) counts[dateKey] = {};
+                if (!counts[dateKey][item.participantId]) counts[dateKey][item.participantId] = 0;
+                counts[dateKey][item.participantId]++;
+            });
+            const sortedDates = Object.keys(counts).sort().reverse();
+            coffeeHistoryContainer.innerHTML = '';
+            sortedDates.forEach(d => {
+                coffeeHistoryContainer.innerHTML += `<h3 class="text-white font-semibold mt-2">${d}</h3>`;
+                Object.keys(counts[d]).forEach(pid => {
+                    const p = localParticipants.find(x => x.id === pid);
+                    const name = p ? p.name : 'Inconnu';
+                    coffeeHistoryContainer.innerHTML += `<p class="ml-4 text-slate-300">${name}: ${counts[d][pid]}</p>`;
+                });
             });
             feather.replace();
         };
@@ -295,6 +356,29 @@
             expenseForm.reset();
         };
 
+        const handleAddCoffeePreparation = async (e) => {
+            e.preventDefault();
+            const participantId = coffeeParticipantSelect.value;
+            const dateValue = coffeeDateInput.value;
+            if (!participantId || !dateValue) {
+                showNotification('Sélectionnez un participant et une date.', 'error');
+                return;
+            }
+            try {
+                await addDoc(coffeePreparationsCollection, {
+                    participantId,
+                    date: Timestamp.fromDate(new Date(dateValue)),
+                    createdAt: serverTimestamp()
+                });
+                showNotification('Préparation enregistrée !');
+                coffeeForm.reset();
+                coffeeDateInput.value = new Date().toISOString().slice(0,10);
+            } catch (err) {
+                console.error('Erreur lors de l\'ajout de la préparation:', err);
+                showNotification("Impossible d'enregistrer.", 'error');
+            }
+        };
+
         const initializeParticipantsIfNeeded = async () => {
             const snapshot = await getDocs(participantsCollection);
             if (snapshot.empty) {
@@ -323,6 +407,7 @@
         });
         expenseForm.addEventListener('submit', handleAddExpense);
         addParticipantForm.addEventListener('submit', handleAddParticipant);
+        coffeeForm.addEventListener('submit', handleAddCoffeePreparation);
 
         // --- Démarrage de l'application ---
         async function main() {
@@ -338,6 +423,7 @@
                     });
                     renderParticipants();
                     renderTotalBalance();
+                    renderCoffeeParticipantsOptions();
                     loadingOverlay.style.opacity = '0';
                     setTimeout(() => loadingOverlay.style.display = 'none', 300);
                 });
@@ -347,6 +433,14 @@
                     const historyData = snapshot.docs.map(doc => doc.data());
                     renderHistory(historyData);
                 });
+
+                const coffeeQuery = query(coffeePreparationsCollection, orderBy("createdAt", "desc"));
+                onSnapshot(coffeeQuery, (snapshot) => {
+                    const data = snapshot.docs.map(doc => doc.data());
+                    renderCoffeeHistory(data);
+                });
+
+                coffeeDateInput.value = new Date().toISOString().slice(0,10);
             } catch (error) {
                 console.error("Erreur de connexion à Firebase:", error);
                 loadingOverlay.innerHTML = `<p class="text-red-400 text-center max-w-sm p-4"><b>Erreur: Impossible de se connecter à Firebase.</b><br>La configuration semble incorrecte. Veuillez vérifier que la clé API est valide et qu'il n'y a pas de restrictions dans votre console Google Cloud.</p>`;
