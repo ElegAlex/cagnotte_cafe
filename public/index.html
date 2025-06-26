@@ -236,10 +236,16 @@
                 
                 // Charger participants
                 const participantsSnapshot = await getDocs(collection(db, 'participants'));
-                participants = participantsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                participants = participantsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        totalContribue: data.totalContribue || 0,
+                        preparationsCompte: data.preparationsCompte || 0,
+                        contributions: data.contributions || []
+                    };
+                });
 
                 // Charger transactions
                 const transactionsSnapshot = await getDocs(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')));
@@ -361,7 +367,7 @@
                 };
                 
                 const nouvellesContributions = [...(participant.contributions || []), retrait];
-                const nouveauTotal = participant.totalContribue - montantFloat;
+                const nouveauTotal = (participant.totalContribue || 0) - montantFloat;
                 
                 await updateDoc(doc(db, 'participants', participantId), {
                     contributions: nouvellesContributions,
@@ -516,7 +522,7 @@
             }
             
             container.innerHTML = participants.map(p => `
-                <div class="participant-card ${p.totalContribue >= 0 ? 'positive-contrib' : 'negative-contrib'}">
+                <div class="participant-card ${(p.totalContribue || 0) >= 0 ? 'positive-contrib' : 'negative-contrib'}">
                     <div class="flex justify-between items-center">
                         <div>
                             <h4 class="font-bold text-lg">${p.nom}</h4>
@@ -641,10 +647,16 @@
         function configurerEcouteTempsReel() {
             // Écouter les participants
             onSnapshot(collection(db, 'participants'), (snapshot) => {
-                participants = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                participants = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        totalContribue: data.totalContribue || 0,
+                        preparationsCompte: data.preparationsCompte || 0,
+                        contributions: data.contributions || []
+                    };
+                });
                 mettreAJourInterface();
             });
 
