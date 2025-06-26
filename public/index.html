@@ -167,18 +167,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, getDoc, setDoc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { firebaseConfig } from "./firebaseConfig.js";
 
         // --- Configuration Firebase ---
-        // Informations provenant de vos captures d'écran.
-        const firebaseConfig = {
-          apiKey: "AIzaSyCzI2ttG9mf_87p_Cwph5cZNTJqc7sFuoY",
-          authDomain: "cagnotte-cafe.firebaseapp.com",
-          projectId: "cagnotte-cafe",
-          storageBucket: "cagnotte-cafe.appspot.com",
-          messagingSenderId: "99343324135",
-          appId: "1:99343324135:web:2f7f17b929daf9579f6342",
-          measurementId: "G-KPTKK1XT9C"
-        };
+        // Les valeurs du projet sont définies dans firebaseConfig.js
 
 
         // --- Initialisation de Firebase & Services ---
