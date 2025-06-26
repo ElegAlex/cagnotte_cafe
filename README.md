@@ -52,3 +52,7 @@ firebase deploy
 
 This uploads `public/index.html` and the associated files defined in `firebase.json` to your Firebase project.
 
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
