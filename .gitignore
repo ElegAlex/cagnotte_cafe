@@ -1,0 +1,9 @@
+# Dependency directories
+node_modules/
+
+# macOS files
+.DS_Store
+
+# Firebase cache and debug files
+.firebase/
+firebase-debug.log*
