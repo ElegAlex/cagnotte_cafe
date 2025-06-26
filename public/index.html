@@ -426,44 +426,62 @@
         const handleAddContribution = async (participantId, amount) => {
             const participant = localParticipants.find(p => p.id === participantId);
             if (participant) {
-                const participantRef = doc(db, "participants", participantId);
-                await updateDoc(participantRef, { balance: participant.balance + amount });
-                await addDoc(historyCollection, {
-                    type: 'contribution',
-                    text: `${participant.name} a contribué.`,
-                    amount: formatCurrency(amount),
-                    createdAt: serverTimestamp()
-                });
-                showNotification(`${participant.name} a ajouté ${formatCurrency(amount)} !`, 'success');
+                try {
+                    const participantRef = doc(db, "participants", participantId);
+                    await updateDoc(participantRef, { balance: participant.balance + amount });
+                    await addDoc(historyCollection, {
+                        type: 'contribution',
+                        text: `${participant.name} a contribué.`,
+                        amount: formatCurrency(amount),
+                        createdAt: serverTimestamp()
+                    });
+                    showNotification(`${participant.name} a ajouté ${formatCurrency(amount)} !`, 'success');
+                } catch (err) {
+                    console.error("Erreur lors de l'ajout de la contribution:", err);
+                    showNotification("Impossible d'ajouter la contribution.", 'error');
+                }
             }
         };
         
         const handleAddExpense = async (e) => {
             e.preventDefault();
+            const submitBtn = expenseForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
             const description = expenseDescriptionInput.value.trim();
             const amount = parseFloat(expenseAmountInput.value);
             if (!description || containsHTML(description) || isNaN(amount) || amount <= 0) {
                 showNotification("Description ou montant invalide.", 'error');
+                if (submitBtn) submitBtn.disabled = false;
                 return;
             }
-            if (localParticipants.length === 0) return;
-            
-            const costPerMember = amount / localParticipants.length;
-            
-            for (const p of localParticipants) {
-                const participantRef = doc(db, "participants", p.id);
-                await updateDoc(participantRef, { balance: p.balance - costPerMember });
+            if (localParticipants.length === 0) {
+                if (submitBtn) submitBtn.disabled = false;
+                return;
             }
 
-            await addDoc(historyCollection, {
-                type: 'expense',
-                text: `Dépense : ${description}`,
-                amount: formatCurrency(amount),
-                createdAt: serverTimestamp()
-            });
-            
-            showNotification(`Dépense de ${formatCurrency(amount)} enregistrée.`, 'success');
-            expenseForm.reset();
+            const costPerMember = amount / localParticipants.length;
+
+            try {
+                for (const p of localParticipants) {
+                    const participantRef = doc(db, "participants", p.id);
+                    await updateDoc(participantRef, { balance: p.balance - costPerMember });
+                }
+
+                await addDoc(historyCollection, {
+                    type: 'expense',
+                    text: `Dépense : ${description}`,
+                    amount: formatCurrency(amount),
+                    createdAt: serverTimestamp()
+                });
+
+                showNotification(`Dépense de ${formatCurrency(amount)} enregistrée.`, 'success');
+                expenseForm.reset();
+            } catch (err) {
+                console.error("Erreur lors de l'enregistrement de la dépense:", err);
+                showNotification("Impossible d'enregistrer la dépense.", 'error');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
         };
 
         const handleAddCoffeePreparation = async (e) => {
@@ -508,7 +526,7 @@
         };
 
         // --- Écouteurs d'événements ---
-        participantsContainer.addEventListener('click', (e) => {
+        participantsContainer.addEventListener('click', async (e) => {
             const button = e.target.closest('.add-contribution-btn');
             if (button) {
                 const participantId = button.dataset.id;
@@ -518,8 +536,12 @@
                      showNotification("Veuillez entrer un montant d'au moins 1€.", 'error');
                      return;
                 }
-                handleAddContribution(participantId, amount);
+                button.disabled = true;
+                input.disabled = true;
+                await handleAddContribution(participantId, amount);
                 input.value = '';
+                button.disabled = false;
+                input.disabled = false;
             }
         });
         expenseForm.addEventListener('submit', handleAddExpense);
