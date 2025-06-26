@@ -457,6 +457,7 @@
                         return {
                             id: doc.id,
                             ...data,
+                            avatar: data.avatar || '🙂',
                             totalContribue: data.totalContribue || 0,
                             preparationsCompte: data.preparationsCompte || 0,
                             cafesBus: data.cafesBus || 0,
@@ -546,6 +547,7 @@
             try {
                 const participant = {
                     nom: nom,
+                    avatar: '🙂',
                     contributions: contribution > 0 ? [{ montant: contribution, date: new Date().toISOString() }] : [],
                     preparationsCompte: 0,
                     cafesBus: 0,
@@ -635,6 +637,18 @@
                     cafesBus: (participant.cafesBus || 0) + 1
                 });
                 mettreAJourInterface();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        };
+
+        window.changerAvatarParticipant = async function(participantId, avatar) {
+            const participant = participants.find(p => p.id === participantId);
+            if (!participant || participant.avatar === avatar) return;
+            try {
+                await updateDoc(doc(db, 'participants', participantId), {
+                    avatar: avatar
+                });
             } catch (error) {
                 console.error('Erreur:', error);
             }
@@ -788,8 +802,15 @@
                                 ${(p.preparationsCompte || 0) > 0 ? `<span class="preparation-count">${p.preparationsCompte || 0} 🫖</span>` : ''}
                             </div>
                         </div>
-                        <div class="text-xl">
-                            ${(p.totalContribue || 0) >= 0 ? '😊' : '😰'}
+                        <div class="flex flex-col items-end">
+                            <div class="text-xl">${escapeHtml(p.avatar || '🙂')}</div>
+                            <select onchange="changerAvatarParticipant('${p.id}', this.value)" class="input px-1 py-0.5 text-xs mt-1">
+                                <option value="🙂" ${p.avatar === '🙂' ? 'selected' : ''}>🙂</option>
+                                <option value="😀" ${p.avatar === '😀' ? 'selected' : ''}>😀</option>
+                                <option value="😎" ${p.avatar === '😎' ? 'selected' : ''}>😎</option>
+                                <option value="😃" ${p.avatar === '😃' ? 'selected' : ''}>😃</option>
+                                <option value="☕" ${p.avatar === '☕' ? 'selected' : ''}>☕</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -929,6 +950,7 @@
                         return {
                             id: doc.id,
                             ...data,
+                            avatar: data.avatar || '🙂',
                             totalContribue: data.totalContribue || 0,
                             preparationsCompte: data.preparationsCompte || 0,
                             cafesBus: data.cafesBus || 0,
