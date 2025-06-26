@@ -214,6 +214,7 @@
 
         // --- Fonctions Utilitaires ---
         const formatCurrency = (amount) => `${Number(amount).toFixed(2)} ${CURRENCY}`;
+        const containsHTML = (str) => /[<>]/.test(str);
         const showNotification = (message, type = 'success') => {
             notificationMessage.textContent = message;
             notificationModal.className = `fixed top-5 right-5 text-white py-2 px-5 rounded-lg shadow-xl transition-transform duration-500 ease-in-out translate-x-0 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
@@ -228,27 +229,64 @@
 
         const renderParticipants = () => {
             participantsContainer.innerHTML = '';
-            // Tri des participants par ordre alphabétique
             localParticipants.sort((a, b) => a.name.localeCompare(b.name));
             localParticipants.forEach(p => {
                 const balanceColor = p.balance >= 0 ? 'text-green-400' : 'text-red-400';
                 const initials = p.name.substring(0, 2).toUpperCase();
                 const prepCount = coffeePrepCounts[p.id] || 0;
                 const debtIcon = prepCount <= lowPrepThreshold ? ' \u{1F480}' : '';
-                participantsContainer.innerHTML += `
-                    <div class="flex items-center justify-between bg-slate-700/50 p-4 rounded-xl hover:bg-slate-700 flex-wrap gap-2">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white mr-4 flex-shrink-0">${initials}</div>
-                            <div>
-                                <p class="font-semibold text-white">${p.name}${debtIcon}</p>
-                                <p class="text-sm ${balanceColor} font-mono">${formatCurrency(p.balance)}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="number" data-id="${p.id}" class="contribution-input w-24 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2" min="1" step="0.01" placeholder="5.00">
-                            <button data-id="${p.id}" class="add-contribution-btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg flex items-center"><i data-feather="plus" class="h-5 w-5"></i></button>
-                        </div>
-                    </div>`;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex items-center justify-between bg-slate-700/50 p-4 rounded-xl hover:bg-slate-700 flex-wrap gap-2';
+
+                const left = document.createElement('div');
+                left.className = 'flex items-center';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white mr-4 flex-shrink-0';
+                avatar.textContent = initials;
+
+                const info = document.createElement('div');
+                const nameP = document.createElement('p');
+                nameP.className = 'font-semibold text-white';
+                nameP.textContent = p.name + debtIcon;
+
+                const balP = document.createElement('p');
+                balP.className = `text-sm ${balanceColor} font-mono`;
+                balP.textContent = formatCurrency(p.balance);
+
+                info.appendChild(nameP);
+                info.appendChild(balP);
+
+                left.appendChild(avatar);
+                left.appendChild(info);
+
+                const right = document.createElement('div');
+                right.className = 'flex items-center gap-2';
+
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.dataset.id = p.id;
+                input.className = 'contribution-input w-24 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2';
+                input.min = '1';
+                input.step = '0.01';
+                input.placeholder = '5.00';
+
+                const button = document.createElement('button');
+                button.dataset.id = p.id;
+                button.className = 'add-contribution-btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg flex items-center';
+                const icon = document.createElement('i');
+                icon.setAttribute('data-feather', 'plus');
+                icon.className = 'h-5 w-5';
+                button.appendChild(icon);
+
+                right.appendChild(input);
+                right.appendChild(button);
+
+                wrapper.appendChild(left);
+                wrapper.appendChild(right);
+
+                participantsContainer.appendChild(wrapper);
             });
             feather.replace();
         };
@@ -256,7 +294,10 @@
         const renderCoffeeParticipantsOptions = () => {
             coffeeParticipantSelect.innerHTML = '';
             localParticipants.forEach(p => {
-                coffeeParticipantSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                coffeeParticipantSelect.appendChild(option);
             });
         };
 
@@ -271,14 +312,31 @@
                 const icon = isExpense ? 'arrow-down' : 'arrow-up';
                 const color = isExpense ? 'text-red-400' : 'text-green-400';
                 const sign = isExpense ? '-' : '+';
-                historyContainer.innerHTML += `
-                    <div class="flex items-start">
-                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center mr-3 flex-shrink-0"><i data-feather="${icon}" class="${color} h-5 w-5"></i></div>
-                        <div>
-                            <p class="text-white text-sm">${item.text}</p>
-                            <p class="text-xs font-mono ${color}">${sign}${item.amount}</p>
-                        </div>
-                    </div>`;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex items-start';
+
+                const iconWrap = document.createElement('div');
+                iconWrap.className = 'w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center mr-3 flex-shrink-0';
+                const iconEl = document.createElement('i');
+                iconEl.setAttribute('data-feather', icon);
+                iconEl.className = `${color} h-5 w-5`;
+                iconWrap.appendChild(iconEl);
+
+                const textWrap = document.createElement('div');
+                const textP = document.createElement('p');
+                textP.className = 'text-white text-sm';
+                textP.textContent = item.text;
+                const amountP = document.createElement('p');
+                amountP.className = `text-xs font-mono ${color}`;
+                amountP.textContent = `${sign}${item.amount}`;
+                textWrap.appendChild(textP);
+                textWrap.appendChild(amountP);
+
+                wrapper.appendChild(iconWrap);
+                wrapper.appendChild(textWrap);
+
+                historyContainer.appendChild(wrapper);
             });
             feather.replace();
         };
@@ -298,11 +356,17 @@
             const sortedDates = Object.keys(counts).sort().reverse();
             coffeeHistoryContainer.innerHTML = '';
             sortedDates.forEach(d => {
-                coffeeHistoryContainer.innerHTML += `<h3 class="text-white font-semibold mt-2">${d}</h3>`;
+                const h3 = document.createElement('h3');
+                h3.className = 'text-white font-semibold mt-2';
+                h3.textContent = d;
+                coffeeHistoryContainer.appendChild(h3);
                 Object.keys(counts[d]).forEach(pid => {
                     const p = localParticipants.find(x => x.id === pid);
                     const name = p ? p.name : 'Inconnu';
-                    coffeeHistoryContainer.innerHTML += `<p class="ml-4 text-slate-300">${name}: ${counts[d][pid]}</p>`;
+                    const pEl = document.createElement('p');
+                    pEl.className = 'ml-4 text-slate-300';
+                    pEl.textContent = `${name}: ${counts[d][pid]}`;
+                    coffeeHistoryContainer.appendChild(pEl);
                 });
             });
             feather.replace();
@@ -338,8 +402,8 @@
             e.preventDefault();
             const name = participantNameInput.value.trim();
             let balance = parseFloat(participantBalanceInput.value);
-            if (!name) {
-                showNotification('Le nom est obligatoire.', 'error');
+            if (!name || containsHTML(name)) {
+                showNotification('Le nom est invalide.', 'error');
                 return;
             }
             if (participantBalanceInput.value.trim() === '' || isNaN(balance)) {
@@ -378,7 +442,7 @@
             e.preventDefault();
             const description = expenseDescriptionInput.value.trim();
             const amount = parseFloat(expenseAmountInput.value);
-            if (!description || isNaN(amount) || amount <= 0) {
+            if (!description || containsHTML(description) || isNaN(amount) || amount <= 0) {
                 showNotification("Description ou montant invalide.", 'error');
                 return;
             }
