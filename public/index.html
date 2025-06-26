@@ -450,6 +450,7 @@
                             ...data,
                             totalContribue: data.totalContribue || 0,
                             preparationsCompte: data.preparationsCompte || 0,
+                            cafesBus: data.cafesBus || 0,
                             contributions: data.contributions || []
                         };
                     })
@@ -538,6 +539,7 @@
                     nom: nom,
                     contributions: contribution > 0 ? [{ montant: contribution, date: new Date().toISOString() }] : [],
                     preparationsCompte: 0,
+                    cafesBus: 0,
                     totalContribue: contribution,
                     dateCreation: new Date().toISOString(),
                     timestamp: serverTimestamp()
@@ -611,6 +613,19 @@
                 });
                 
                 await ajouterTransaction(`Retrait de ${participant.nom}`, montantFloat, 'retrait', participant.nom);
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        };
+
+        window.incrementerCafeBu = async function(participantId) {
+            const participant = participants.find(p => p.id === participantId);
+            if (!participant) return;
+            try {
+                await updateDoc(doc(db, 'participants', participantId), {
+                    cafesBus: (participant.cafesBus || 0) + 1
+                });
+                mettreAJourInterface();
             } catch (error) {
                 console.error('Erreur:', error);
             }
@@ -753,7 +768,10 @@
                 <div class="participant-card ${(p.totalContribue || 0) >= 0 ? 'participant-positive' : 'participant-negative'} p-4 mb-3">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex-1">
-                            <h4 class="font-medium text-gray-900">${p.nom}</h4>
+                            <h4 class="font-medium text-gray-900 flex items-center gap-2">
+                                ${p.nom}
+                                <span class="text-xs text-muted">${p.cafesBus || 0} ☕</span>
+                            </h4>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="text-sm ${(p.totalContribue || 0) >= 0 ? 'text-success' : 'text-danger'} font-medium">
                                     ${(p.totalContribue || 0).toFixed(2)}€
@@ -767,19 +785,20 @@
                     </div>
                     
                     <div class="flex gap-2">
-                        <input type="number" 
-                               id="contrib-${p.id}" 
-                               placeholder="Montant" 
-                               step="0.01" 
+                        <input type="number"
+                               id="contrib-${p.id}"
+                               placeholder="Montant"
+                               step="0.01"
                                class="input flex-1 px-2 py-1 text-sm">
                         <button onclick="ajouterContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
                                 class="btn btn-success px-3 py-1 text-xs">
                             +
                         </button>
-                        <button onclick="retirerContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''" 
+                        <button onclick="retirerContributionParticipant('${p.id}', document.getElementById('contrib-${p.id}').value); document.getElementById('contrib-${p.id}').value=''"
                                 class="btn btn-danger px-3 py-1 text-xs">
                             −
                         </button>
+                        <button onclick="incrementerCafeBu('${p.id}')" class="btn btn-secondary px-3 py-1 text-xs">☕</button>
                     </div>
                 </div>
             `).join('');
@@ -903,6 +922,7 @@
                             ...data,
                             totalContribue: data.totalContribue || 0,
                             preparationsCompte: data.preparationsCompte || 0,
+                            cafesBus: data.cafesBus || 0,
                             contributions: data.contributions || []
                         };
                     })

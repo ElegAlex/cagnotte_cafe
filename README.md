@@ -51,6 +51,10 @@ firebase deploy
 
 This uploads `public/index.html` and the associated files defined in `firebase.json` to your Firebase project.
 
+## Coffee consumption tracking
+
+Each participant card shows how many coffees they consumed. Click the ☕ button to increment this count for a participant. The value is stored in Firestore so everyone sees updates in real time.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
