@@ -14,10 +14,10 @@ Make sure you are logged in with `firebase login` and have access to a Firebase 
 
 ## Firebase configuration
 
-The app expects your Firebase credentials in `index.html` inside the `firebaseConfig` object. Replace the placeholder values with those from your Firebase console:
+The app expects your Firebase credentials in `public/index.html` inside the `firebaseConfig` object. Replace the placeholder values with those from your Firebase console:
 
 ```html
-<!-- index.html -->
+<!-- public/index.html -->
 <script type="module">
   // ...
   const firebaseConfig = {
@@ -50,5 +50,5 @@ Deploy the application to Firebase Hosting with:
 firebase deploy
 ```
 
-This uploads `index.html` and the associated files defined in `firebase.json` to your Firebase project.
+This uploads `public/index.html` and the associated files defined in `firebase.json` to your Firebase project.
 
