@@ -70,6 +70,22 @@
                     <div id="participants-container" class="space-y-4"></div>
                 </div>
                 <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                    <h2 class="text-lg font-semibold text-white mb-4">Ajouter un Participant</h2>
+                    <form id="add-participant-form" class="space-y-4">
+                        <div>
+                            <label for="participant-name" class="block text-sm font-medium text-slate-400 mb-1">Nom</label>
+                            <input type="text" id="participant-name" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
+                        </div>
+                        <div>
+                            <label for="participant-balance" class="block text-sm font-medium text-slate-400 mb-1">Solde initial (€) (optionnel)</label>
+                            <input type="number" id="participant-balance" step="0.01" min="0" placeholder="0" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-all-smooth flex items-center justify-center">
+                            <i data-feather="user-plus" class="mr-2 h-5 w-5"></i>Ajouter le Participant
+                        </button>
+                    </form>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
                     <h2 class="text-lg font-semibold text-white mb-4">Enregistrer une Dépense</h2>
                     <form id="expense-form" class="space-y-4">
                         <div>
@@ -137,6 +153,9 @@
         const expenseForm = document.getElementById('expense-form');
         const expenseDescriptionInput = document.getElementById('expense-description');
         const expenseAmountInput = document.getElementById('expense-amount');
+        const addParticipantForm = document.getElementById('add-participant-form');
+        const participantNameInput = document.getElementById('participant-name');
+        const participantBalanceInput = document.getElementById('participant-balance');
         const notificationModal = document.getElementById('notification-modal');
         const notificationMessage = document.getElementById('notification-message');
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -207,6 +226,31 @@
         };
 
         // --- Logique Firebase ---
+
+        const handleAddParticipant = async (e) => {
+            e.preventDefault();
+            const name = participantNameInput.value.trim();
+            let balance = parseFloat(participantBalanceInput.value);
+            if (!name) {
+                showNotification('Le nom est obligatoire.', 'error');
+                return;
+            }
+            if (participantBalanceInput.value.trim() === '' || isNaN(balance)) {
+                balance = 0;
+            }
+            if (balance < 0) {
+                showNotification('Le solde initial ne peut être négatif.', 'error');
+                return;
+            }
+            try {
+                await addDoc(participantsCollection, { name, balance });
+                showNotification('Participant ajouté !');
+                addParticipantForm.reset();
+            } catch (err) {
+                console.error('Erreur lors de l\'ajout du participant:', err);
+                showNotification("Impossible d'ajouter le participant.", 'error');
+            }
+        };
         
         const handleAddContribution = async (participantId, amount) => {
             const participant = localParticipants.find(p => p.id === participantId);
@@ -278,6 +322,7 @@
             }
         });
         expenseForm.addEventListener('submit', handleAddExpense);
+        addParticipantForm.addEventListener('submit', handleAddParticipant);
 
         // --- Démarrage de l'application ---
         async function main() {
