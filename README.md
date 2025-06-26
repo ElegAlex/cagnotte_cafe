@@ -31,8 +31,6 @@ export const firebaseConfig = {
 
 `public/index.html` imports this module to initialise Firebase.
 
-The file is listed in `.gitignore`, so make sure to keep your real keys locally.
-
 ## Local development
 
 Run a local server that mimics Firebase Hosting:
@@ -52,7 +50,6 @@ firebase deploy
 ```
 
 This uploads `public/index.html` and the associated files defined in `firebase.json` to your Firebase project.
-Ensure your `public/firebaseConfig.js` file is copied alongside, since it is ignored by git.
 
 ## Coffee consumption tracking
 

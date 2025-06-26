@@ -392,7 +392,16 @@
             serverTimestamp 
         } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        import { firebaseConfig } from './firebaseConfig.js';
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZi2ttG9mf_87p_Cwph5cZNtJqc7sFuoY",
+            authDomain: "cagnotte-cafe.firebaseapp.com",
+            projectId: "cagnotte-cafe",
+            storageBucket: "cagnotte-cafe.firebasestorage.app",
+            messagingSenderId: "99343324135",
+            appId: "1:99343324135:web:2f7f17b929daf9579f6342",
+            measurementId: "G-KPTKK1XT9C"
+        };
 
         // Initialiser Firebase
         const app = initializeApp(firebaseConfig);

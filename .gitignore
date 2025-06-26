@@ -7,4 +7,3 @@ node_modules/
 # Firebase cache and debug files
 .firebase/
 firebase-debug.log*
-public/firebaseConfig.js
