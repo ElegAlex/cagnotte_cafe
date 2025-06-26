@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cagnotte Café de l'Équipe (Connectée)</title>
+    
+    <!-- Tailwind CSS, Google Fonts, Feather Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        .transition-all-smooth { transition: all 0.3s ease-in-out; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        /* Style pour l'état de chargement */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Écran de chargement en attendant la connexion à Firebase -->
+    <div id="loading-overlay">
+        <div class="text-center">
+            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-white mt-3">Connexion à la base de données...</p>
+        </div>
+    </div>
+
+    <div class="w-full max-w-4xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-white">La Cagnotte du Café ☕</h1>
+            <p class="text-slate-400 mt-2">Pour que la machine à café ne soit jamais à sec.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                    <h2 class="text-lg font-semibold text-white mb-4">Solde Actuel de la Cagnotte</h2>
+                    <div id="total-balance" class="text-5xl font-bold text-emerald-400">0.00 €</div>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                    <h2 class="text-lg font-semibold text-white mb-4">Participants</h2>
+                    <div id="participants-container" class="space-y-4"></div>
+                </div>
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                    <h2 class="text-lg font-semibold text-white mb-4">Enregistrer une Dépense</h2>
+                    <form id="expense-form" class="space-y-4">
+                        <div>
+                            <label for="expense-description" class="block text-sm font-medium text-slate-400 mb-1">Description</label>
+                            <input type="text" id="expense-description" placeholder="Achat de café en grains, filtres..." class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
+                        </div>
+                        <div>
+                            <label for="expense-amount" class="block text-sm font-medium text-slate-400 mb-1">Montant (€)</label>
+                            <input type="number" id="expense-amount" step="0.01" min="0" placeholder="15.50" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all-smooth" required>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all-smooth flex items-center justify-center">
+                            <i data-feather="arrow-down-circle" class="mr-2 h-5 w-5"></i>Ajouter la Dépense
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="lg:col-span-1">
+                <div class="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 h-full flex flex-col">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Historique des Transactions</h2>
+                    <div id="history-container" class="flex-grow space-y-3 overflow-y-auto pr-2 -mr-2">
+                        <p class="text-slate-500 text-center py-4">Aucune transaction pour le moment.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div id="notification-modal" class="fixed top-5 right-5 bg-emerald-500 text-white py-2 px-5 rounded-lg shadow-xl translate-x-[150%] transition-transform duration-500 ease-in-out">
+        <p id="notification-message"></p>
+    </div>
+
+    <!-- ===== Import des librairies Firebase ===== -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, onSnapshot, getDocs, updateDoc, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- Configuration Firebase ---
+        // Informations provenant de vos captures d'écran.
+        const firebaseConfig = {
+          apiKey: "AIzaSyCzI2ttG9mf_87p_Cwph5cZNTJqc7sFuoY",
+          authDomain: "cagnotte-cafe.firebaseapp.com",
+          projectId: "cagnotte-cafe",
+          storageBucket: "cagnotte-cafe.appspot.com",
+          messagingSenderId: "99343324135",
+          appId: "1:99343324135:web:2f7f17b929daf9579f6342",
+          measurementId: "G-KPTKK1XT9C"
+        };
+
+
+        // --- Initialisation de Firebase & Services ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- Références aux collections Firestore ---
+        const participantsCollection = collection(db, 'participants');
+        const historyCollection = collection(db, 'history');
+        
+        // --- ÉLÉMENTS DU DOM ---
+        const participantsContainer = document.getElementById('participants-container');
+        const totalBalanceEl = document.getElementById('total-balance');
+        const historyContainer = document.getElementById('history-container');
+        const expenseForm = document.getElementById('expense-form');
+        const expenseDescriptionInput = document.getElementById('expense-description');
+        const expenseAmountInput = document.getElementById('expense-amount');
+        const notificationModal = document.getElementById('notification-modal');
+        const notificationMessage = document.getElementById('notification-message');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        
+        const CURRENCY = '€';
+        let localParticipants = []; // Cache local pour les participants
+
+        // --- Fonctions Utilitaires ---
+        const formatCurrency = (amount) => `${Number(amount).toFixed(2)} ${CURRENCY}`;
+        const showNotification = (message, type = 'success') => {
+            notificationMessage.textContent = message;
+            notificationModal.className = `fixed top-5 right-5 text-white py-2 px-5 rounded-lg shadow-xl transition-transform duration-500 ease-in-out translate-x-0 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+            setTimeout(() => { notificationModal.classList.add('translate-x-[150%]'); }, 3000);
+        };
+        
+        // --- Fonctions de Rendu (UI) ---
+        const renderTotalBalance = () => {
+            const total = localParticipants.reduce((sum, p) => sum + p.balance, 0);
+            totalBalanceEl.textContent = formatCurrency(total);
+        };
+
+        const renderParticipants = () => {
+            participantsContainer.innerHTML = '';
+            // Tri des participants par ordre alphabétique
+            localParticipants.sort((a, b) => a.name.localeCompare(b.name));
+            localParticipants.forEach(p => {
+                const balanceColor = p.balance >= 0 ? 'text-green-400' : 'text-red-400';
+                const initials = p.name.substring(0, 2).toUpperCase();
+                participantsContainer.innerHTML += `
+                    <div class="flex items-center justify-between bg-slate-700/50 p-4 rounded-xl hover:bg-slate-700 flex-wrap gap-2">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white mr-4 flex-shrink-0">${initials}</div>
+                            <div>
+                                <p class="font-semibold text-white">${p.name}</p>
+                                <p class="text-sm ${balanceColor} font-mono">${formatCurrency(p.balance)}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" data-id="${p.id}" class="contribution-input w-24 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2" min="1" step="0.01" placeholder="5.00">
+                            <button data-id="${p.id}" class="add-contribution-btn bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg flex items-center"><i data-feather="plus" class="h-5 w-5"></i></button>
+                        </div>
+                    </div>`;
+            });
+            feather.replace();
+        };
+
+        const renderHistory = (historyData) => {
+            if (historyData.length === 0) {
+                historyContainer.innerHTML = '<p class="text-slate-500 text-center py-4">Aucune transaction.</p>';
+                return;
+            }
+            historyContainer.innerHTML = '';
+            historyData.forEach(item => {
+                const isExpense = item.type === 'expense';
+                const icon = isExpense ? 'arrow-down' : 'arrow-up';
+                const color = isExpense ? 'text-red-400' : 'text-green-400';
+                const sign = isExpense ? '-' : '+';
+                historyContainer.innerHTML += `
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center mr-3 flex-shrink-0"><i data-feather="${icon}" class="${color} h-5 w-5"></i></div>
+                        <div>
+                            <p class="text-white text-sm">${item.text}</p>
+                            <p class="text-xs font-mono ${color}">${sign}${item.amount}</p>
+                        </div>
+                    </div>`;
+            });
+            feather.replace();
+        };
+
+        // --- Logique Firebase ---
+        
+        const handleAddContribution = async (participantId, amount) => {
+            const participant = localParticipants.find(p => p.id === participantId);
+            if (participant) {
+                const participantRef = doc(db, "participants", participantId);
+                await updateDoc(participantRef, { balance: participant.balance + amount });
+                await addDoc(historyCollection, {
+                    type: 'contribution',
+                    text: `${participant.name} a contribué.`,
+                    amount: formatCurrency(amount),
+                    createdAt: serverTimestamp()
+                });
+                showNotification(`${participant.name} a ajouté ${formatCurrency(amount)} !`, 'success');
+            }
+        };
+        
+        const handleAddExpense = async (e) => {
+            e.preventDefault();
+            const description = expenseDescriptionInput.value.trim();
+            const amount = parseFloat(expenseAmountInput.value);
+            if (!description || isNaN(amount) || amount <= 0) {
+                showNotification("Description ou montant invalide.", 'error');
+                return;
+            }
+            if (localParticipants.length === 0) return;
+            
+            const costPerMember = amount / localParticipants.length;
+            
+            for (const p of localParticipants) {
+                const participantRef = doc(db, "participants", p.id);
+                await updateDoc(participantRef, { balance: p.balance - costPerMember });
+            }
+
+            await addDoc(historyCollection, {
+                type: 'expense',
+                text: `Dépense : ${description}`,
+                amount: formatCurrency(amount),
+                createdAt: serverTimestamp()
+            });
+            
+            showNotification(`Dépense de ${formatCurrency(amount)} enregistrée.`, 'success');
+            expenseForm.reset();
+        };
+
+        const initializeParticipantsIfNeeded = async () => {
+            const snapshot = await getDocs(participantsCollection);
+            if (snapshot.empty) {
+                console.log("Base de données vide, initialisation des participants...");
+                const initialParticipants = ['Soso', 'Gégé', 'Aurel', 'Alex', 'Oliv'];
+                for (const name of initialParticipants) {
+                    await addDoc(participantsCollection, { name: name, balance: 0 });
+                }
+            }
+        };
+
+        // --- Écouteurs d'événements ---
+        participantsContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('.add-contribution-btn');
+            if (button) {
+                const participantId = button.dataset.id;
+                const input = document.querySelector(`.contribution-input[data-id='${participantId}']`);
+                const amount = parseFloat(input.value);
+                if (isNaN(amount) || amount < 1) {
+                     showNotification("Veuillez entrer un montant d'au moins 1€.", 'error');
+                     return;
+                }
+                handleAddContribution(participantId, amount);
+                input.value = '';
+            }
+        });
+        expenseForm.addEventListener('submit', handleAddExpense);
+
+        // --- Démarrage de l'application ---
+        async function main() {
+            try {
+                await signInAnonymously(auth);
+                await initializeParticipantsIfNeeded();
+
+                const participantsQuery = query(participantsCollection);
+                onSnapshot(participantsQuery, (snapshot) => {
+                    localParticipants = [];
+                    snapshot.forEach(doc => {
+                        localParticipants.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderParticipants();
+                    renderTotalBalance();
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => loadingOverlay.style.display = 'none', 300);
+                });
+
+                const historyQuery = query(historyCollection, orderBy("createdAt", "desc"));
+                onSnapshot(historyQuery, (snapshot) => {
+                    const historyData = snapshot.docs.map(doc => doc.data());
+                    renderHistory(historyData);
+                });
+            } catch (error) {
+                console.error("Erreur de connexion à Firebase:", error);
+                loadingOverlay.innerHTML = `<p class="text-red-400 text-center max-w-sm p-4"><b>Erreur: Impossible de se connecter à Firebase.</b><br>La configuration semble incorrecte. Veuillez vérifier que la clé API est valide et qu'il n'y a pas de restrictions dans votre console Google Cloud.</p>`;
+            }
+        }
+        
+        main(); // Lancer l'application
+    </script>
+</body>
+</html>
+
