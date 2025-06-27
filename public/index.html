@@ -202,7 +202,7 @@
     <!-- Header -->
     <header class="border-b border-gray-200 bg-white">
         <div class="max-w-6xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">Cagnotte Café</h1>
                     <p class="text-sm text-gray-600 mt-1">Gestion collective des frais café</p>
@@ -334,7 +334,7 @@
                     
                     <div class="space-y-3">
                         <div class="stock-item p-3">
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
                                 <span class="text-sm font-medium text-gray-900">Paquets de café</span>
                                 <div class="flex items-center gap-2">
                                     <button onclick="modifierStock('cafe', -1)" class="btn btn-secondary w-8 h-8 text-xs">-</button>
@@ -345,7 +345,7 @@
                         </div>
                         
                         <div class="stock-item p-3">
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
                                 <span class="text-sm font-medium text-gray-900">Filtres</span>
                                 <div class="flex items-center gap-2">
                                     <button onclick="modifierStock('filtres', -1)" class="btn btn-secondary w-8 h-8 text-xs">-</button>
@@ -789,7 +789,7 @@
             
             container.innerHTML = participants.map(p => `
                 <div class="participant-card ${(p.totalContribue || 0) >= 0 ? 'participant-positive' : 'participant-negative'} p-4 mb-3">
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
                         <div class="flex-1">
                             <h4 class="font-medium text-gray-900 flex items-center gap-2">
                                 ${escapeHtml(p.nom)}
@@ -814,7 +814,7 @@
                         </div>
                     </div>
                     
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <input type="number"
                                id="contrib-${p.id}"
                                placeholder="Montant"
@@ -864,7 +864,7 @@
                 
                 return `
                     <div class="transaction-item p-3">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-xs ${typeColor}">${typeIcon}</span>
